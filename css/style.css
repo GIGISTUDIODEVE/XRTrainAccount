@@ -848,6 +848,9 @@ body {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 4px;
 }
 
 .mission-card {
@@ -901,6 +904,9 @@ body {
     border-radius: 16px;
     box-shadow: var(--shadow-xl);
     padding: 24px;
+    max-height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
     animation: slideIn 0.35s ease-out;
 }
 
@@ -931,6 +937,12 @@ body {
 
 .modal-form {
     margin-top: 8px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+    padding-right: 4px;
 }
 
 .modal-actions {
