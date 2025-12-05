@@ -221,10 +221,6 @@
                     </div>
                     <div class="header-actions">
                         <span class="user-chip" id="userDisplayName">사용자</span>
-                        <button class="btn-secondary" id="editProfileBtn">
-                            <i class="fas fa-edit"></i>
-                            <span>관리자 정보 수정</span>
-                        </button>
                         <button class="btn-logout" id="logoutBtn">
                             <i class="fas fa-sign-out-alt"></i>
                             <span>로그아웃</span>
@@ -235,17 +231,24 @@
                 <div class="dashboard-tabs">
                     <button class="tab-button active" data-target="adminView" id="tabAdmin">관리자 정보</button>
                     <button class="tab-button" data-target="participantView" id="tabParticipants">참가자 관리</button>
+                    <button class="tab-button" data-target="scenarioView" id="tabScenarios">시나리오 관리</button>
                 </div>
 
                 <div class="dashboard-panels">
                     <div class="dashboard-content" id="adminView">
                         <div class="welcome-card">
-                            <div class="welcome-header">
-                                <i class="fas fa-user-shield"></i>
-                                <div>
-                                    <h2>관리자 정보</h2>
-                                    <p class="welcome-message">현재 로그인한 관리자 계정입니다.</p>
+                            <div class="welcome-header-row">
+                                <div class="welcome-header">
+                                    <i class="fas fa-user-shield"></i>
+                                    <div>
+                                        <h2>관리자 정보</h2>
+                                        <p class="welcome-message">현재 로그인한 관리자 계정입니다.</p>
+                                    </div>
                                 </div>
+                                <button class="btn-secondary" id="editProfileBtn">
+                                    <i class="fas fa-edit"></i>
+                                    <span>관리자 정보 수정</span>
+                                </button>
                             </div>
                             <div class="admin-grid">
                                 <div class="admin-summary">
@@ -258,69 +261,27 @@
                                         <span class="summary-value" id="dashboardEmail">-</span>
                                     </div>
                                     <div class="summary-row">
-                                        <span class="summary-label">가입일</span>
-                                        <span class="summary-value" id="dashboardJoinDate">-</span>
+                                        <span class="summary-label">소속</span>
+                                        <span class="summary-value" id="dashboardAffiliation">-</span>
                                     </div>
                                     <div class="summary-row">
-                                        <span class="summary-label">담당 참가자 수</span>
-                                        <span class="summary-value" id="participantCount">0</span>
+                                        <span class="summary-label">직위</span>
+                                        <span class="summary-value" id="dashboardPosition">-</span>
                                     </div>
                                 </div>
                                 <div class="admin-detail">
                                     <div class="detail-item">
-                                        <i class="fas fa-user"></i>
+                                        <i class="fas fa-calendar-alt"></i>
                                         <div>
-                                            <span class="info-label">사용자명</span>
-                                            <span class="info-value" id="dashboardUsername">-</span>
+                                            <span class="info-label">가입일</span>
+                                            <span class="info-value" id="dashboardJoinDate">-</span>
                                         </div>
                                     </div>
                                     <div class="detail-item">
-                                        <i class="fas fa-birthday-cake"></i>
+                                        <i class="fas fa-users"></i>
                                         <div>
-                                            <span class="info-label">생년월일</span>
-                                            <span class="info-value" id="dashboardBirthDate">-</span>
-                                        </div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <i class="fas fa-hourglass-half"></i>
-                                        <div>
-                                            <span class="info-label">나이</span>
-                                            <span class="info-value" id="dashboardAge">-</span>
-                                        </div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <i class="fas fa-venus-mars"></i>
-                                        <div>
-                                            <span class="info-label">성별</span>
-                                            <span class="info-value" id="dashboardGender">-</span>
-                                        </div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                        <div>
-                                            <span class="info-label">거주지역</span>
-                                            <span class="info-value" id="dashboardRegion">-</span>
-                                        </div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <i class="fas fa-stethoscope"></i>
-                                        <div>
-                                            <span class="info-label">질환명</span>
-                                            <span class="info-value" id="dashboardConditions">-</span>
-                                        </div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <i class="fas fa-user-check"></i>
-                                        <div>
-                                            <span class="info-label">참가자 상태</span>
-                                            <span class="info-value" id="dashboardStatus">-</span>
-                                        </div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <i class="fas fa-sticky-note"></i>
-                                        <div>
-                                            <span class="info-label">기타</span>
-                                            <span class="info-value" id="dashboardNotes">-</span>
+                                            <span class="info-label">담당 참가자 수</span>
+                                            <span class="info-value" id="participantCount">0</span>
                                         </div>
                                     </div>
                                 </div>
@@ -336,10 +297,16 @@
                                     <h2>참가자 목록</h2>
                                     <p class="welcome-message">관리자와 별도로 참가자 정보를 추가·수정하세요.</p>
                                 </div>
-                                <button class="btn-primary" id="addParticipantBtn">
-                                    <i class="fas fa-user-plus"></i>
-                                    <span>참가자 추가</span>
-                                </button>
+                                <div class="participant-actions">
+                                    <div class="search-input" role="search">
+                                        <i class="fas fa-search" aria-hidden="true"></i>
+                                        <input type="search" id="participantSearch" placeholder="이름으로 검색" aria-label="참가자 이름 검색">
+                                    </div>
+                                    <button class="btn-primary" id="addParticipantBtn">
+                                        <i class="fas fa-user-plus"></i>
+                                        <span>참가자 추가</span>
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="table-wrapper">
@@ -368,6 +335,41 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="dashboard-content hidden" id="scenarioView">
+                        <div class="welcome-card participants-card">
+                            <div class="participants-header">
+                                <div>
+                                    <p class="eyebrow">시나리오 관리</p>
+                                    <h2>시나리오 목록</h2>
+                                    <p class="welcome-message">관리자별 시나리오를 추가·수정하고 미션 구성을 확인하세요.</p>
+                                </div>
+                                <button class="btn-primary" id="addScenarioBtn">
+                                    <i class="fas fa-plus-circle"></i>
+                                    <span>시나리오 추가</span>
+                                </button>
+                            </div>
+
+                            <div class="table-wrapper">
+                                <table class="participant-table">
+                                    <thead>
+                                        <tr>
+                                            <th>제목</th>
+                                            <th>난이도</th>
+                                            <th>생성일</th>
+                                            <th>미션 수</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="scenarioTableBody">
+                                        <tr class="empty-row">
+                                            <td colspan="5">등록된 시나리오가 없습니다. 오른쪽 상단의 시나리오 추가 버튼을 눌러 새 데이터를 입력하세요.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -389,43 +391,120 @@
             <form id="editProfileForm" class="modal-form">
                 <div class="grid two-column">
                     <div class="input-group">
-                        <i class="fas fa-user-check"></i>
-                        <select id="editStatus" required>
-                            <option value="active">활동 중</option>
-                            <option value="paused">일시 중단</option>
-                            <option value="completed">참여 완료</option>
-                        </select>
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="editFullName" placeholder="이름" required>
                     </div>
                     <div class="input-group">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <input type="text" id="editRegion" placeholder="거주지역" required>
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="editEmail" placeholder="이메일" readonly>
                     </div>
                 </div>
 
-                <div class="input-group condition-group">
-                    <div class="field-label-row">
-                        <label class="field-label" for="editConditionInput">질환명</label>
-                        <p class="input-hint">예: 천식, 알레르기 비염, 아토피</p>
+                <div class="grid two-column">
+                    <div class="input-group">
+                        <i class="fas fa-building"></i>
+                        <input type="text" id="editAffiliation" placeholder="소속">
                     </div>
-                    <div class="condition-row">
-                        <div class="condition-input-wrapper">
-                            <i class="fas fa-stethoscope"></i>
-                            <input type="text" id="editConditionInput" placeholder="질환명을 하나씩 입력 후 + 버튼을 누르세요">
-                        </div>
-                        <button type="button" class="btn-add-condition" id="editAddConditionBtn" aria-label="질환명 추가">
-                            <i class="fas fa-plus"></i>
-                        </button>
+                    <div class="input-group">
+                        <i class="fas fa-id-badge"></i>
+                        <input type="text" id="editPosition" placeholder="직위">
                     </div>
-                    <div class="condition-chips" id="editConditionChips"></div>
                 </div>
 
-                <div class="input-group">
-                    <i class="fas fa-sticky-note"></i>
-                    <textarea id="editNotes" placeholder="기타 (선택)" rows="3"></textarea>
+                <div class="grid two-column">
+                    <div class="input-group">
+                        <i class="fas fa-calendar-alt"></i>
+                        <input type="text" id="editJoinDate" placeholder="가입일" readonly>
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-users"></i>
+                        <input type="number" id="editParticipantCount" placeholder="담당 참가자 수" readonly>
+                    </div>
                 </div>
 
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" id="cancelEdit">취소</button>
+                    <button type="submit" class="btn-primary">
+                        <span>저장</span>
+                        <i class="fas fa-check"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 시나리오 추가/수정 모달 -->
+    <div class="modal-overlay hidden" id="scenarioModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div>
+                    <p class="eyebrow">시나리오 관리</p>
+                    <h2 id="scenarioModalTitle">시나리오 추가</h2>
+                </div>
+                <button class="icon-button" id="closeScenarioModal" aria-label="닫기">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form id="scenarioForm" class="modal-form">
+                <div class="input-group">
+                    <i class="fas fa-heading"></i>
+                    <input type="text" id="scenarioTitle" placeholder="시나리오 제목" required>
+                </div>
+
+                <div class="input-group">
+                    <i class="fas fa-signal"></i>
+                    <select id="scenarioDifficulty" required>
+                        <option value="easy">쉬움</option>
+                        <option value="medium">보통</option>
+                        <option value="hard">어려움</option>
+                    </select>
+                </div>
+
+                <div class="mission-builder">
+                    <div class="field-label-row">
+                        <label class="field-label" for="missionNameInput">미션 추가</label>
+                        <p class="input-hint">예상 질문/답변은 항목별 입력 영역에 최대 3개까지 추가할 수 있습니다.</p>
+                    </div>
+                    <div class="grid two-column">
+                        <div class="input-group">
+                            <i class="fas fa-list-ol"></i>
+                            <input type="text" id="missionNameInput" placeholder="미션 이름">
+                        </div>
+                        <div class="mission-actions">
+                            <button type="button" class="btn-secondary" id="addMissionBtn">
+                                <i class="fas fa-plus"></i>
+                                <span>미션 추가</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mission-inputs">
+                        <div class="mission-items">
+                            <div class="mission-items-header">
+                                <span class="mission-items-title"><i class="fas fa-question-circle"></i> 예상 질문</span>
+                                <button type="button" class="icon-button" id="addQuestionBtn" aria-label="예상 질문 추가">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <div class="mission-item-list" id="missionQuestionsList"></div>
+                        </div>
+                        <div class="mission-items">
+                            <div class="mission-items-header">
+                                <span class="mission-items-title"><i class="fas fa-comment-dots"></i> 예상 답변</span>
+                                <button type="button" class="icon-button" id="addAnswerBtn" aria-label="예상 답변 추가">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <div class="mission-item-list" id="missionAnswersList"></div>
+                        </div>
+                    </div>
+
+                    <div class="mission-list" id="missionList"></div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancelScenario">취소</button>
                     <button type="submit" class="btn-primary">
                         <span>저장</span>
                         <i class="fas fa-check"></i>
@@ -517,7 +596,6 @@
                         <i class="fas fa-clock"></i>
                         <input type="datetime-local" id="participantLastSeen" placeholder="마지막 접속일시">
                     </div>
-                    <div class="condition-chips" id="editConditionChips"></div>
                 </div>
 
                 <div class="input-group">
@@ -542,6 +620,6 @@
         <span id="toastMessage"></span>
     </div>
 
-    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>
