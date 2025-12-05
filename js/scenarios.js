@@ -29,6 +29,47 @@ import {
 import { state } from './state.js';
 import { formatDate, getFirestoreErrorMessage, isFirestorePermissionError, showToast } from './utils.js';
 
+const MAX_EXPECTED_ITEMS = 3;
+
+function normalizeMission(mission = {}) {
+    const expectedQuestions = Array.isArray(mission.expectedQuestions) ? mission.expectedQuestions : [];
+    const expectedAnswers = Array.isArray(mission.expectedAnswers) ? mission.expectedAnswers : [];
+
+    return {
+        name: mission.name?.trim() || '',
+        expectedQuestions: expectedQuestions
+            .map((item) => (item ?? '').toString().trim())
+            .filter(Boolean)
+            .slice(0, MAX_EXPECTED_ITEMS),
+        expectedAnswers: expectedAnswers
+            .map((item) => (item ?? '').toString().trim())
+            .filter(Boolean)
+            .slice(0, MAX_EXPECTED_ITEMS)
+    };
+}
+
+function resetMissionForm() {
+    missionNameInput.value = '';
+    missionQuestionsInput.value = '';
+    missionAnswersInput.value = '';
+    state.editingMissionIndex = null;
+    updateMissionActionState();
+}
+
+function updateMissionActionState() {
+    if (!addMissionBtn) return;
+
+    const label = addMissionBtn.querySelector('span');
+    const icon = addMissionBtn.querySelector('i');
+    if (state.editingMissionIndex !== null) {
+        label.textContent = '미션 업데이트';
+        icon.className = 'fas fa-save';
+    } else {
+        label.textContent = '미션 추가';
+        icon.className = 'fas fa-plus';
+    }
+}
+
 export async function loadScenarios() {
     if (!state.currentUser) return;
 
@@ -96,13 +137,16 @@ export function openScenarioModal(mode = 'add', scenario = null) {
     if (mode === 'edit' && scenario) {
         scenarioTitleInput.value = scenario.title || '';
         scenarioDifficultyInput.value = scenario.difficulty || 'easy';
-        state.scenarioMissions = Array.isArray(scenario.missions) ? [...scenario.missions] : [];
+        state.scenarioMissions = Array.isArray(scenario.missions)
+            ? scenario.missions.map((mission) => normalizeMission(mission))
+            : [];
     } else {
         scenarioForm.reset();
         scenarioDifficultyInput.value = 'easy';
         state.scenarioMissions = [];
     }
 
+    resetMissionForm();
     renderMissionList();
     scenarioModal.classList.remove('hidden');
     document.body.classList.add('modal-open');
@@ -113,6 +157,7 @@ export function closeScenarioModal() {
     document.body.classList.remove('modal-open');
     scenarioForm.reset();
     state.scenarioMissions = [];
+    resetMissionForm();
     renderMissionList();
 }
 
@@ -132,15 +177,26 @@ export function addMissionFromInputs() {
         return;
     }
 
-    state.scenarioMissions.push({
+    if (expectedQuestions.length > MAX_EXPECTED_ITEMS || expectedAnswers.length > MAX_EXPECTED_ITEMS) {
+        showToast('예상 질문/답변은 각각 최대 3개까지 입력할 수 있습니다.', 'error');
+        return;
+    }
+
+    const missionPayload = normalizeMission({
         name,
         expectedQuestions,
         expectedAnswers
     });
 
-    missionNameInput.value = '';
-    missionQuestionsInput.value = '';
-    missionAnswersInput.value = '';
+    if (state.editingMissionIndex !== null) {
+        state.scenarioMissions[state.editingMissionIndex] = missionPayload;
+        showToast('미션이 업데이트되었습니다.', 'success');
+    } else {
+        state.scenarioMissions.push(missionPayload);
+        showToast('미션이 추가되었습니다.', 'success');
+    }
+
+    resetMissionForm();
     renderMissionList();
 }
 
@@ -158,6 +214,9 @@ export function renderMissionList() {
     state.scenarioMissions.forEach((mission, index) => {
         const card = document.createElement('div');
         card.className = 'mission-card';
+        if (state.editingMissionIndex === index) {
+            card.classList.add('editing');
+        }
 
         const header = document.createElement('div');
         header.className = 'mission-card-header';
@@ -166,6 +225,16 @@ export function renderMissionList() {
         title.className = 'mission-title';
         title.textContent = `${index + 1}. ${mission.name}`;
 
+        const actions = document.createElement('div');
+        actions.className = 'mission-card-actions';
+
+        const editBtn = document.createElement('button');
+        editBtn.type = 'button';
+        editBtn.className = 'icon-button';
+        editBtn.setAttribute('aria-label', `${mission.name} 편집`);
+        editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+        editBtn.addEventListener('click', () => startEditMission(index));
+
         const removeBtn = document.createElement('button');
         removeBtn.type = 'button';
         removeBtn.className = 'icon-button';
@@ -173,7 +242,8 @@ export function renderMissionList() {
         removeBtn.innerHTML = '<i class="fas fa-times"></i>';
         removeBtn.addEventListener('click', () => removeMission(index));
 
-        header.append(title, removeBtn);
+        actions.append(editBtn, removeBtn);
+        header.append(title, actions);
 
         const meta = document.createElement('div');
         meta.className = 'mission-meta';
@@ -182,13 +252,58 @@ export function renderMissionList() {
             <span><i class="fas fa-comment-dots"></i> 예상 답변 ${mission.expectedAnswers?.length || 0}개</span>
         `;
 
-        card.append(header, meta);
+        const details = document.createElement('div');
+        details.className = 'mission-details';
+
+        const questionsList = document.createElement('div');
+        questionsList.className = 'mission-list-block';
+        questionsList.innerHTML = `
+            <div class="mission-list-title"><i class="fas fa-question-circle"></i> 예상 질문</div>
+            ${renderMissionItems(mission.expectedQuestions, '입력된 예상 질문이 없습니다.')}
+        `;
+
+        const answersList = document.createElement('div');
+        answersList.className = 'mission-list-block';
+        answersList.innerHTML = `
+            <div class="mission-list-title"><i class="fas fa-comment-dots"></i> 예상 답변</div>
+            ${renderMissionItems(mission.expectedAnswers, '입력된 예상 답변이 없습니다.')}
+        `;
+
+        details.append(questionsList, answersList);
+
+        card.append(header, meta, details);
         missionList.appendChild(card);
     });
 }
 
+function renderMissionItems(items = [], emptyText) {
+    if (!items.length) {
+        return `<p class="mission-empty">${emptyText}</p>`;
+    }
+
+    const list = items
+        .slice(0, MAX_EXPECTED_ITEMS)
+        .map((item, idx) => `<li>${idx + 1}. ${item}</li>`) // length already enforced but keep slicing
+        .join('');
+
+    return `<ul class="mission-text-list">${list}</ul>`;
+}
+
+function startEditMission(index) {
+    const mission = state.scenarioMissions[index];
+    if (!mission) return;
+
+    state.editingMissionIndex = index;
+    missionNameInput.value = mission.name || '';
+    missionQuestionsInput.value = (mission.expectedQuestions || []).join('\n');
+    missionAnswersInput.value = (mission.expectedAnswers || []).join('\n');
+    updateMissionActionState();
+    renderMissionList();
+}
+
 function removeMission(index) {
     state.scenarioMissions.splice(index, 1);
+    resetMissionForm();
     renderMissionList();
 }
 
@@ -198,7 +313,7 @@ export async function handleScenarioSubmit(event, onScenariosUpdated) {
 
     const title = scenarioTitleInput.value.trim();
     const difficulty = scenarioDifficultyInput.value;
-    const missions = [...state.scenarioMissions];
+    const missions = state.scenarioMissions.map((mission) => normalizeMission(mission));
 
     if (!title || !difficulty) {
         showToast('제목과 난이도를 입력해주세요.', 'error');
@@ -265,5 +380,6 @@ export function wireScenarioEvents(onScenariosUpdated) {
         }
     });
 
+    updateMissionActionState();
     renderMissionList();
 }

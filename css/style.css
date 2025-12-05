@@ -863,11 +863,21 @@ body {
     gap: 6px;
 }
 
+.mission-card.editing {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
 .mission-card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+}
+
+.mission-card-actions {
+    display: flex;
+    gap: 8px;
 }
 
 .mission-title {
@@ -885,6 +895,56 @@ body {
 .mission-meta i {
     margin-right: 6px;
     color: #2563eb;
+}
+
+.mission-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+    padding-top: 4px;
+}
+
+.mission-list-block {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mission-list-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.mission-list-title i {
+    color: #2563eb;
+}
+
+.mission-text-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: #374151;
+}
+
+.mission-text-list li {
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.mission-empty {
+    color: #9ca3af;
+    font-size: 14px;
+    margin: 0;
 }
 
 /* Modal */

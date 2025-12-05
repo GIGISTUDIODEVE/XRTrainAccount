@@ -6,5 +6,6 @@ export const state = {
     scenarios: [],
     scenarioMissions: [],
     editingParticipantId: null,
-    editingScenarioId: null
+    editingScenarioId: null,
+    editingMissionIndex: null
 };
