@@ -221,10 +221,6 @@
                     </div>
                     <div class="header-actions">
                         <span class="user-chip" id="userDisplayName">사용자</span>
-                        <button class="btn-secondary" id="editProfileBtn">
-                            <i class="fas fa-edit"></i>
-                            <span>관리자 정보 수정</span>
-                        </button>
                         <button class="btn-logout" id="logoutBtn">
                             <i class="fas fa-sign-out-alt"></i>
                             <span>로그아웃</span>
@@ -240,12 +236,18 @@
                 <div class="dashboard-panels">
                     <div class="dashboard-content" id="adminView">
                         <div class="welcome-card">
-                            <div class="welcome-header">
-                                <i class="fas fa-user-shield"></i>
-                                <div>
-                                    <h2>관리자 정보</h2>
-                                    <p class="welcome-message">현재 로그인한 관리자 계정입니다.</p>
+                            <div class="welcome-header-row">
+                                <div class="welcome-header">
+                                    <i class="fas fa-user-shield"></i>
+                                    <div>
+                                        <h2>관리자 정보</h2>
+                                        <p class="welcome-message">현재 로그인한 관리자 계정입니다.</p>
+                                    </div>
                                 </div>
+                                <button class="btn-secondary" id="editProfileBtn">
+                                    <i class="fas fa-edit"></i>
+                                    <span>관리자 정보 수정</span>
+                                </button>
                             </div>
                             <div class="admin-grid">
                                 <div class="admin-summary">
@@ -258,69 +260,27 @@
                                         <span class="summary-value" id="dashboardEmail">-</span>
                                     </div>
                                     <div class="summary-row">
-                                        <span class="summary-label">가입일</span>
-                                        <span class="summary-value" id="dashboardJoinDate">-</span>
+                                        <span class="summary-label">소속</span>
+                                        <span class="summary-value" id="dashboardAffiliation">-</span>
                                     </div>
                                     <div class="summary-row">
-                                        <span class="summary-label">담당 참가자 수</span>
-                                        <span class="summary-value" id="participantCount">0</span>
+                                        <span class="summary-label">직위</span>
+                                        <span class="summary-value" id="dashboardPosition">-</span>
                                     </div>
                                 </div>
                                 <div class="admin-detail">
                                     <div class="detail-item">
-                                        <i class="fas fa-user"></i>
+                                        <i class="fas fa-calendar-alt"></i>
                                         <div>
-                                            <span class="info-label">사용자명</span>
-                                            <span class="info-value" id="dashboardUsername">-</span>
+                                            <span class="info-label">가입일</span>
+                                            <span class="info-value" id="dashboardJoinDate">-</span>
                                         </div>
                                     </div>
                                     <div class="detail-item">
-                                        <i class="fas fa-birthday-cake"></i>
+                                        <i class="fas fa-users"></i>
                                         <div>
-                                            <span class="info-label">생년월일</span>
-                                            <span class="info-value" id="dashboardBirthDate">-</span>
-                                        </div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <i class="fas fa-hourglass-half"></i>
-                                        <div>
-                                            <span class="info-label">나이</span>
-                                            <span class="info-value" id="dashboardAge">-</span>
-                                        </div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <i class="fas fa-venus-mars"></i>
-                                        <div>
-                                            <span class="info-label">성별</span>
-                                            <span class="info-value" id="dashboardGender">-</span>
-                                        </div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                        <div>
-                                            <span class="info-label">거주지역</span>
-                                            <span class="info-value" id="dashboardRegion">-</span>
-                                        </div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <i class="fas fa-stethoscope"></i>
-                                        <div>
-                                            <span class="info-label">질환명</span>
-                                            <span class="info-value" id="dashboardConditions">-</span>
-                                        </div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <i class="fas fa-user-check"></i>
-                                        <div>
-                                            <span class="info-label">참가자 상태</span>
-                                            <span class="info-value" id="dashboardStatus">-</span>
-                                        </div>
-                                    </div>
-                                    <div class="detail-item">
-                                        <i class="fas fa-sticky-note"></i>
-                                        <div>
-                                            <span class="info-label">기타</span>
-                                            <span class="info-value" id="dashboardNotes">-</span>
+                                            <span class="info-label">담당 참가자 수</span>
+                                            <span class="info-value" id="participantCount">0</span>
                                         </div>
                                     </div>
                                 </div>
@@ -389,39 +349,35 @@
             <form id="editProfileForm" class="modal-form">
                 <div class="grid two-column">
                     <div class="input-group">
-                        <i class="fas fa-user-check"></i>
-                        <select id="editStatus" required>
-                            <option value="active">활동 중</option>
-                            <option value="paused">일시 중단</option>
-                            <option value="completed">참여 완료</option>
-                        </select>
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="editFullName" placeholder="이름" required>
                     </div>
                     <div class="input-group">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <input type="text" id="editRegion" placeholder="거주지역" required>
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="editEmail" placeholder="이메일" readonly>
                     </div>
                 </div>
 
-                <div class="input-group condition-group">
-                    <div class="field-label-row">
-                        <label class="field-label" for="editConditionInput">질환명</label>
-                        <p class="input-hint">예: 천식, 알레르기 비염, 아토피</p>
+                <div class="grid two-column">
+                    <div class="input-group">
+                        <i class="fas fa-building"></i>
+                        <input type="text" id="editAffiliation" placeholder="소속">
                     </div>
-                    <div class="condition-row">
-                        <div class="condition-input-wrapper">
-                            <i class="fas fa-stethoscope"></i>
-                            <input type="text" id="editConditionInput" placeholder="질환명을 하나씩 입력 후 + 버튼을 누르세요">
-                        </div>
-                        <button type="button" class="btn-add-condition" id="editAddConditionBtn" aria-label="질환명 추가">
-                            <i class="fas fa-plus"></i>
-                        </button>
+                    <div class="input-group">
+                        <i class="fas fa-id-badge"></i>
+                        <input type="text" id="editPosition" placeholder="직위">
                     </div>
-                    <div class="condition-chips" id="editConditionChips"></div>
                 </div>
 
-                <div class="input-group">
-                    <i class="fas fa-sticky-note"></i>
-                    <textarea id="editNotes" placeholder="기타 (선택)" rows="3"></textarea>
+                <div class="grid two-column">
+                    <div class="input-group">
+                        <i class="fas fa-calendar-alt"></i>
+                        <input type="text" id="editJoinDate" placeholder="가입일" readonly>
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-users"></i>
+                        <input type="number" id="editParticipantCount" placeholder="담당 참가자 수" readonly>
+                    </div>
                 </div>
 
                 <div class="modal-actions">
@@ -517,7 +473,6 @@
                         <i class="fas fa-clock"></i>
                         <input type="datetime-local" id="participantLastSeen" placeholder="마지막 접속일시">
                     </div>
-                    <div class="condition-chips" id="editConditionChips"></div>
                 </div>
 
                 <div class="input-group">
@@ -542,6 +497,6 @@
         <span id="toastMessage"></span>
     </div>
 
-    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>
