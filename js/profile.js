@@ -9,17 +9,17 @@ import {
     getDocs
 } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
-import { auth, db } from './firebaseConfig.js';
+import { db } from './firebaseConfig.js';
 import {
-    editAddConditionBtn,
-    editConditionChips,
-    editConditionInput,
-    editNotes,
+    editAffiliation,
+    editEmail,
+    editFullName,
+    editJoinDate,
+    editParticipantCount,
+    editPosition,
     editProfileBtn,
     editProfileForm,
     editProfileModal,
-    editRegion,
-    editStatus,
     closeEditModalBtn,
     cancelEditBtn
 } from './domElements.js';
@@ -28,8 +28,9 @@ import {
     buildFallbackProfile,
     getFirestoreErrorMessage,
     isFirestorePermissionError,
-    normalizeConditions,
-    showToast
+    showToast,
+    formatDate,
+    normalizeConditions
 } from './utils.js';
 
 export async function loadUserProfile(user) {
@@ -84,11 +85,14 @@ export async function loadUserProfile(user) {
 }
 
 export function syncEditFormWithProfile() {
-    editStatus.value = state.currentUser?.status || 'active';
-    editRegion.value = state.currentUser?.region || '';
-    editNotes.value = state.currentUser?.notes || '';
-    state.editConditionList = normalizeConditions(state.currentUser?.conditions);
-    renderEditConditionChips();
+    editFullName.value = state.currentUser?.fullName || '';
+    editEmail.value = state.currentUser?.email || '';
+    editAffiliation.value = state.currentUser?.affiliation || '';
+    editPosition.value = state.currentUser?.position || '';
+
+    const joinDate = state.currentUser?.createdAt ? new Date(state.currentUser.createdAt) : new Date();
+    editJoinDate.value = formatDate(joinDate);
+    editParticipantCount.value = state.participants.length.toString();
 }
 
 export function openEditModal() {
@@ -107,26 +111,19 @@ export function handleProfileUpdate(event, onUpdated) {
     event.preventDefault();
     if (!state.currentUser) return;
 
-    const updatedRegion = editRegion.value.trim();
-    const updatedStatus = editStatus.value;
-    const updatedNotes = editNotes.value.trim();
-    const updatedConditions = [...state.editConditionList];
+    const updatedFullName = editFullName.value.trim();
+    const updatedAffiliation = editAffiliation.value.trim();
+    const updatedPosition = editPosition.value.trim();
 
-    if (!updatedRegion) {
-        showToast('거주지역을 입력해주세요.', 'error');
-        return;
-    }
-
-    if (!updatedConditions.length) {
-        showToast('질환명을 하나 이상 입력해주세요.', 'error');
+    if (!updatedFullName) {
+        showToast('이름을 입력해주세요.', 'error');
         return;
     }
 
     const updates = {
-        region: updatedRegion,
-        status: updatedStatus,
-        notes: updatedNotes,
-        conditions: updatedConditions
+        fullName: updatedFullName,
+        affiliation: updatedAffiliation,
+        position: updatedPosition
     };
 
     updateUserProfile(updates)
@@ -155,58 +152,6 @@ async function updateUserProfile(updates) {
         }
         throw error;
     }
-}
-
-export function addEditConditionFromInput() {
-    const value = editConditionInput.value.trim();
-    if (!value) {
-        showToast('질환명을 입력한 뒤 + 버튼을 눌러주세요.', 'warning');
-        return;
-    }
-
-    if (state.editConditionList.includes(value)) {
-        showToast('이미 추가된 질환명입니다.', 'warning');
-        editConditionInput.value = '';
-        return;
-    }
-
-    state.editConditionList.push(value);
-    editConditionInput.value = '';
-    renderEditConditionChips();
-}
-
-function renderEditConditionChips() {
-    editConditionChips.innerHTML = '';
-
-    if (!state.editConditionList.length) {
-        const empty = document.createElement('span');
-        empty.className = 'chip-empty';
-        empty.textContent = '질환명을 추가해주세요.';
-        editConditionChips.appendChild(empty);
-        return;
-    }
-
-    state.editConditionList.forEach((item, index) => {
-        const chip = document.createElement('div');
-        chip.className = 'condition-chip';
-
-        const text = document.createElement('span');
-        text.textContent = item;
-
-        const removeBtn = document.createElement('button');
-        removeBtn.type = 'button';
-        removeBtn.setAttribute('aria-label', `${item} 삭제`);
-        removeBtn.innerHTML = '<i class="fas fa-times"></i>';
-        removeBtn.addEventListener('click', () => removeEditCondition(index));
-
-        chip.append(text, removeBtn);
-        editConditionChips.appendChild(chip);
-    });
-}
-
-function removeEditCondition(index) {
-    state.editConditionList.splice(index, 1);
-    renderEditConditionChips();
 }
 
 export async function checkUsernameAvailability(username) {
@@ -240,11 +185,4 @@ export function wireProfileEvents(onProfileUpdated) {
     closeEditModalBtn?.addEventListener('click', closeEditModal);
     cancelEditBtn?.addEventListener('click', closeEditModal);
     editProfileForm?.addEventListener('submit', (event) => handleProfileUpdate(event, onProfileUpdated));
-    editAddConditionBtn?.addEventListener('click', addEditConditionFromInput);
-    editConditionInput?.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            addEditConditionFromInput();
-        }
-    });
 }

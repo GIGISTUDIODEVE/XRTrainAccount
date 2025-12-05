@@ -349,39 +349,35 @@
             <form id="editProfileForm" class="modal-form">
                 <div class="grid two-column">
                     <div class="input-group">
-                        <i class="fas fa-user-check"></i>
-                        <select id="editStatus" required>
-                            <option value="active">활동 중</option>
-                            <option value="paused">일시 중단</option>
-                            <option value="completed">참여 완료</option>
-                        </select>
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="editFullName" placeholder="이름" required>
                     </div>
                     <div class="input-group">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <input type="text" id="editRegion" placeholder="거주지역" required>
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="editEmail" placeholder="이메일" readonly>
                     </div>
                 </div>
 
-                <div class="input-group condition-group">
-                    <div class="field-label-row">
-                        <label class="field-label" for="editConditionInput">질환명</label>
-                        <p class="input-hint">예: 천식, 알레르기 비염, 아토피</p>
+                <div class="grid two-column">
+                    <div class="input-group">
+                        <i class="fas fa-building"></i>
+                        <input type="text" id="editAffiliation" placeholder="소속">
                     </div>
-                    <div class="condition-row">
-                        <div class="condition-input-wrapper">
-                            <i class="fas fa-stethoscope"></i>
-                            <input type="text" id="editConditionInput" placeholder="질환명을 하나씩 입력 후 + 버튼을 누르세요">
-                        </div>
-                        <button type="button" class="btn-add-condition" id="editAddConditionBtn" aria-label="질환명 추가">
-                            <i class="fas fa-plus"></i>
-                        </button>
+                    <div class="input-group">
+                        <i class="fas fa-id-badge"></i>
+                        <input type="text" id="editPosition" placeholder="직위">
                     </div>
-                    <div class="condition-chips" id="editConditionChips"></div>
                 </div>
 
-                <div class="input-group">
-                    <i class="fas fa-sticky-note"></i>
-                    <textarea id="editNotes" placeholder="기타 (선택)" rows="3"></textarea>
+                <div class="grid two-column">
+                    <div class="input-group">
+                        <i class="fas fa-calendar-alt"></i>
+                        <input type="text" id="editJoinDate" placeholder="가입일" readonly>
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-users"></i>
+                        <input type="number" id="editParticipantCount" placeholder="담당 참가자 수" readonly>
+                    </div>
                 </div>
 
                 <div class="modal-actions">
@@ -477,7 +473,6 @@
                         <i class="fas fa-clock"></i>
                         <input type="datetime-local" id="participantLastSeen" placeholder="마지막 접속일시">
                     </div>
-                    <div class="condition-chips" id="editConditionChips"></div>
                 </div>
 
                 <div class="input-group">

@@ -180,6 +180,5 @@ export function resetAuthForms(loginForm, signupForm) {
     loginForm?.reset();
     signupForm?.reset();
     state.conditionList = [];
-    state.editConditionList = [];
     state.participantConditionList = [];
 }
