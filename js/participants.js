@@ -20,6 +20,7 @@ import {
     participantConditionChips,
     participantConditionInput,
     participantCountEl,
+    participantEmailInput,
     participantForm,
     participantGenderInput,
     participantLastSeenInput,
