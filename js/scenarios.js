@@ -15,10 +15,12 @@ import {
     addScenarioBtn,
     cancelScenarioBtn,
     closeScenarioModalBtn,
-    missionAnswersInput,
+    addAnswerBtn,
+    addQuestionBtn,
+    missionAnswersList,
     missionList,
     missionNameInput,
-    missionQuestionsInput,
+    missionQuestionsList,
     scenarioDifficultyInput,
     scenarioForm,
     scenarioModal,
@@ -50,9 +52,8 @@ function normalizeMission(mission = {}) {
 
 function resetMissionForm() {
     missionNameInput.value = '';
-    missionQuestionsInput.value = '';
-    missionAnswersInput.value = '';
     state.editingMissionIndex = null;
+    renderExpectedInputs();
     updateMissionActionState();
 }
 
@@ -68,6 +69,68 @@ function updateMissionActionState() {
         label.textContent = '미션 추가';
         icon.className = 'fas fa-plus';
     }
+}
+
+function getPlaceholder(type, index) {
+    const label = type === 'question' ? '예상 질문' : '예상 답변';
+    return `${label} ${index}`;
+}
+
+function addExpectedItem(type, value = '') {
+    const container = type === 'question' ? missionQuestionsList : missionAnswersList;
+    if (!container) return;
+
+    if (container.children.length >= MAX_EXPECTED_ITEMS) {
+        showToast('예상 질문/답변은 각각 최대 3개까지 입력할 수 있습니다.', 'error');
+        return;
+    }
+
+    const index = container.children.length + 1;
+    const row = document.createElement('div');
+    row.className = 'mission-item-row';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = getPlaceholder(type, index);
+    input.value = value;
+    input.maxLength = 200;
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'icon-button';
+    removeBtn.setAttribute('aria-label', `${getPlaceholder(type, index)} 삭제`);
+    removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+    removeBtn.addEventListener('click', () => {
+        row.remove();
+        if (!container.children.length) {
+            addExpectedItem(type);
+        }
+    });
+
+    row.append(input, removeBtn);
+    container.appendChild(row);
+}
+
+function renderExpectedInputs(questions = [], answers = []) {
+    if (missionQuestionsList) {
+        missionQuestionsList.innerHTML = '';
+        const questionValues = questions.length ? questions : [''];
+        questionValues.slice(0, MAX_EXPECTED_ITEMS).forEach((q) => addExpectedItem('question', q));
+    }
+
+    if (missionAnswersList) {
+        missionAnswersList.innerHTML = '';
+        const answerValues = answers.length ? answers : [''];
+        answerValues.slice(0, MAX_EXPECTED_ITEMS).forEach((a) => addExpectedItem('answer', a));
+    }
+}
+
+function getExpectedItems(container) {
+    if (!container) return [];
+    return Array.from(container.querySelectorAll('input'))
+        .map((input) => input.value.trim())
+        .filter(Boolean)
+        .slice(0, MAX_EXPECTED_ITEMS);
 }
 
 export async function loadScenarios() {
@@ -163,14 +226,8 @@ export function closeScenarioModal() {
 
 export function addMissionFromInputs() {
     const name = missionNameInput.value.trim();
-    const expectedQuestions = missionQuestionsInput.value
-        .split('\n')
-        .map((item) => item.trim())
-        .filter(Boolean);
-    const expectedAnswers = missionAnswersInput.value
-        .split('\n')
-        .map((item) => item.trim())
-        .filter(Boolean);
+    const expectedQuestions = getExpectedItems(missionQuestionsList);
+    const expectedAnswers = getExpectedItems(missionAnswersList);
 
     if (!name) {
         showToast('미션 이름을 입력해주세요.', 'error');
@@ -295,8 +352,7 @@ function startEditMission(index) {
 
     state.editingMissionIndex = index;
     missionNameInput.value = mission.name || '';
-    missionQuestionsInput.value = (mission.expectedQuestions || []).join('\n');
-    missionAnswersInput.value = (mission.expectedAnswers || []).join('\n');
+    renderExpectedInputs(mission.expectedQuestions || [], mission.expectedAnswers || []);
     updateMissionActionState();
     renderMissionList();
 }
@@ -373,6 +429,8 @@ export function wireScenarioEvents(onScenariosUpdated) {
     cancelScenarioBtn?.addEventListener('click', closeScenarioModal);
     scenarioForm?.addEventListener('submit', (event) => handleScenarioSubmit(event, onScenariosUpdated));
     addMissionBtn?.addEventListener('click', addMissionFromInputs);
+    addQuestionBtn?.addEventListener('click', () => addExpectedItem('question'));
+    addAnswerBtn?.addEventListener('click', () => addExpectedItem('answer'));
     missionNameInput?.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
             event.preventDefault();
@@ -381,5 +439,6 @@ export function wireScenarioEvents(onScenariosUpdated) {
     });
 
     updateMissionActionState();
+    renderExpectedInputs();
     renderMissionList();
 }

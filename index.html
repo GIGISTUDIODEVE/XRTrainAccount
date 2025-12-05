@@ -458,7 +458,7 @@
                 <div class="mission-builder">
                     <div class="field-label-row">
                         <label class="field-label" for="missionNameInput">미션 추가</label>
-                        <p class="input-hint">예상 질문/답변은 줄바꿈으로 구분해 입력하세요. (각 항목 최대 3개)</p>
+                        <p class="input-hint">예상 질문/답변은 항목별 입력 영역에 최대 3개까지 추가할 수 있습니다.</p>
                     </div>
                     <div class="grid two-column">
                         <div class="input-group">
@@ -472,16 +472,28 @@
                             </button>
                         </div>
                     </div>
-                    <div class="grid two-column">
-                        <div class="input-group">
-                            <i class="fas fa-question-circle"></i>
-                            <textarea id="missionQuestionsInput" placeholder="예상 질문 (한 줄에 하나씩)" rows="3"></textarea>
+
+                    <div class="mission-inputs">
+                        <div class="mission-items">
+                            <div class="mission-items-header">
+                                <span class="mission-items-title"><i class="fas fa-question-circle"></i> 예상 질문</span>
+                                <button type="button" class="icon-button" id="addQuestionBtn" aria-label="예상 질문 추가">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <div class="mission-item-list" id="missionQuestionsList"></div>
                         </div>
-                        <div class="input-group">
-                            <i class="fas fa-comment-dots"></i>
-                            <textarea id="missionAnswersInput" placeholder="예상 답변 (한 줄에 하나씩)" rows="3"></textarea>
+                        <div class="mission-items">
+                            <div class="mission-items-header">
+                                <span class="mission-items-title"><i class="fas fa-comment-dots"></i> 예상 답변</span>
+                                <button type="button" class="icon-button" id="addAnswerBtn" aria-label="예상 답변 추가">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <div class="mission-item-list" id="missionAnswersList"></div>
                         </div>
                     </div>
+
                     <div class="mission-list" id="missionList"></div>
                 </div>
 

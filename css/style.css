@@ -844,6 +844,65 @@ body {
     align-items: center;
 }
 
+.mission-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+}
+
+.mission-items {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.mission-items-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.mission-items-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.mission-item-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mission-item-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 8px;
+}
+
+.mission-item-row input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #f9fafb;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.mission-item-row input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    background: #fff;
+}
+
 .mission-list {
     display: flex;
     flex-direction: column;
