@@ -51,8 +51,12 @@ function normalizeMission(mission = {}) {
 }
 
 function resetMissionForm() {
-    missionNameInput.value = '';
     state.editingMissionIndex = null;
+
+    if (missionNameInput) {
+        missionNameInput.value = '';
+    }
+
     renderExpectedInputs();
     updateMissionActionState();
 }
