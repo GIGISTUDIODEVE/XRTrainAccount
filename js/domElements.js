@@ -47,6 +47,7 @@ export const editParticipantCount = document.getElementById('editParticipantCoun
 export const participantCountEl = document.getElementById('participantCount');
 export const participantTableBody = document.getElementById('participantTableBody');
 export const addParticipantBtn = document.getElementById('addParticipantBtn');
+export const participantSearchInput = document.getElementById('participantSearch');
 export const participantModal = document.getElementById('participantModal');
 export const participantModalTitle = document.getElementById('participantModalTitle');
 export const closeParticipantModalBtn = document.getElementById('closeParticipantModal');

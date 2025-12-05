@@ -29,6 +29,7 @@ import {
     participantNameInput,
     participantNotesInput,
     participantRegionInput,
+    participantSearchInput,
     participantStatusInput,
     participantTableBody
 } from './domElements.js';
@@ -74,21 +75,27 @@ export function renderParticipantTable() {
     if (!participantTableBody) return;
     participantTableBody.innerHTML = '';
 
-    if (!state.participants.length) {
+    const filteredParticipants = getFilteredParticipants();
+
+    if (!filteredParticipants.length) {
         const emptyRow = document.createElement('tr');
         emptyRow.className = 'empty-row';
         const td = document.createElement('td');
         td.colSpan = 11;
-        td.textContent = '등록된 참가자가 없습니다. 오른쪽 상단의 참가자 추가 버튼을 눌러 새 데이터를 입력하세요.';
+        if (state.participants.length === 0) {
+            td.textContent = '등록된 참가자가 없습니다. 오른쪽 상단의 참가자 추가 버튼을 눌러 새 데이터를 입력하세요.';
+        } else {
+            td.textContent = '검색 결과가 없습니다. 이름 철자를 확인하거나 다른 키워드로 검색해보세요.';
+        }
         emptyRow.appendChild(td);
         participantTableBody.appendChild(emptyRow);
-        participantCountEl.textContent = '0';
+        participantCountEl.textContent = state.participants.length.toString();
         return;
     }
 
     participantCountEl.textContent = state.participants.length.toString();
 
-    state.participants.forEach((participant) => {
+    filteredParticipants.forEach((participant) => {
         const tr = document.createElement('tr');
 
         tr.innerHTML = `
@@ -116,6 +123,15 @@ export function renderParticipantTable() {
         actionsCell.appendChild(editBtn);
         participantTableBody.appendChild(tr);
     });
+}
+
+function getFilteredParticipants() {
+    const query = state.participantSearchQuery?.trim().toLowerCase();
+    if (!query) {
+        return state.participants;
+    }
+
+    return state.participants.filter((participant) => (participant.fullName || '').toLowerCase().includes(query));
 }
 
 export function openParticipantModal(mode = 'add', participant = null) {
@@ -290,7 +306,14 @@ export function wireParticipantEvents(onParticipantsUpdated) {
         }
     });
 
+    participantSearchInput?.addEventListener('input', handleParticipantSearchInput);
+
     renderParticipantConditionChips();
+}
+
+function handleParticipantSearchInput() {
+    state.participantSearchQuery = participantSearchInput.value;
+    renderParticipantTable();
 }
 
 function updateParticipantAgeFromBirthdate() {

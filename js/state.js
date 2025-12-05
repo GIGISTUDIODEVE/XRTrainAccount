@@ -3,6 +3,7 @@ export const state = {
     conditionList: [],
     participantConditionList: [],
     participants: [],
+    participantSearchQuery: '',
     scenarios: [],
     scenarioMissions: [],
     editingParticipantId: null,

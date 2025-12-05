@@ -647,6 +647,42 @@ body {
     margin-bottom: 12px;
 }
 
+.participant-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.search-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--bg-primary);
+    min-width: 220px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-input:focus-within {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.search-input i {
+    color: var(--text-muted);
+}
+
+.search-input input {
+    border: none;
+    outline: none;
+    width: 100%;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
 .table-wrapper {
     overflow-x: auto;
     border: 1px solid var(--border-color);

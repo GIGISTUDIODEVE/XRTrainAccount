@@ -297,10 +297,16 @@
                                     <h2>참가자 목록</h2>
                                     <p class="welcome-message">관리자와 별도로 참가자 정보를 추가·수정하세요.</p>
                                 </div>
-                                <button class="btn-primary" id="addParticipantBtn">
-                                    <i class="fas fa-user-plus"></i>
-                                    <span>참가자 추가</span>
-                                </button>
+                                <div class="participant-actions">
+                                    <div class="search-input" role="search">
+                                        <i class="fas fa-search" aria-hidden="true"></i>
+                                        <input type="search" id="participantSearch" placeholder="이름으로 검색" aria-label="참가자 이름 검색">
+                                    </div>
+                                    <button class="btn-primary" id="addParticipantBtn">
+                                        <i class="fas fa-user-plus"></i>
+                                        <span>참가자 추가</span>
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="table-wrapper">
