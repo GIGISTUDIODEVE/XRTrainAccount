@@ -828,6 +828,62 @@ body {
     font-size: 20px;
 }
 
+.mission-builder {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mission-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.mission-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mission-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mission-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.mission-title {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.mission-meta {
+    display: flex;
+    gap: 12px;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.mission-meta i {
+    margin-right: 6px;
+    color: #2563eb;
+}
+
 /* Modal */
 .modal-overlay {
     position: fixed;

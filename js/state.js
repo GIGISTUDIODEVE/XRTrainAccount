@@ -3,5 +3,8 @@ export const state = {
     conditionList: [],
     participantConditionList: [],
     participants: [],
-    editingParticipantId: null
+    scenarios: [],
+    scenarioMissions: [],
+    editingParticipantId: null,
+    editingScenarioId: null
 };

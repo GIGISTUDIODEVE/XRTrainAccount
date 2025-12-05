@@ -5,6 +5,7 @@ import {
 } from './authHandlers.js';
 import { wireProfileEvents } from './profile.js';
 import { loadParticipants, renderParticipantTable, wireParticipantEvents } from './participants.js';
+import { loadScenarios, renderScenarioTable, wireScenarioEvents } from './scenarios.js';
 import { setDashboardTab, showDashboard, updateDashboard, showAuth } from './navigation.js';
 import { state } from './state.js';
 
@@ -14,6 +15,7 @@ window.addEventListener('DOMContentLoaded', () => {
     initAuthListeners(() => {
         if (state.currentUser) {
             renderParticipantTable();
+            renderScenarioTable();
             showDashboard();
         } else {
             showAuth();
@@ -29,6 +31,12 @@ function setupEventListeners() {
         updateDashboard(state.currentUser);
     });
 
+    wireScenarioEvents(async () => {
+        await loadScenarios();
+        renderScenarioTable();
+    });
+
     document.getElementById('tabAdmin')?.addEventListener('click', () => setDashboardTab('admin'));
     document.getElementById('tabParticipants')?.addEventListener('click', () => setDashboardTab('participants'));
+    document.getElementById('tabScenarios')?.addEventListener('click', () => setDashboardTab('scenarios'));
 }

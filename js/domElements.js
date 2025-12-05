@@ -9,8 +9,10 @@ export const pages = {
 
 export const tabAdmin = document.getElementById('tabAdmin');
 export const tabParticipants = document.getElementById('tabParticipants');
+export const tabScenarios = document.getElementById('tabScenarios');
 export const adminView = document.getElementById('adminView');
 export const participantView = document.getElementById('participantView');
+export const scenarioView = document.getElementById('scenarioView');
 
 export const loginFormElement = document.getElementById('loginFormElement');
 export const signupFormElement = document.getElementById('signupFormElement');
@@ -62,3 +64,18 @@ export const participantNotesInput = document.getElementById('participantNotes')
 export const participantConditionInput = document.getElementById('participantConditionInput');
 export const participantAddConditionBtn = document.getElementById('participantAddConditionBtn');
 export const participantConditionChips = document.getElementById('participantConditionChips');
+
+export const addScenarioBtn = document.getElementById('addScenarioBtn');
+export const scenarioTableBody = document.getElementById('scenarioTableBody');
+export const scenarioModal = document.getElementById('scenarioModal');
+export const scenarioModalTitle = document.getElementById('scenarioModalTitle');
+export const closeScenarioModalBtn = document.getElementById('closeScenarioModal');
+export const cancelScenarioBtn = document.getElementById('cancelScenario');
+export const scenarioForm = document.getElementById('scenarioForm');
+export const scenarioTitleInput = document.getElementById('scenarioTitle');
+export const scenarioDifficultyInput = document.getElementById('scenarioDifficulty');
+export const missionNameInput = document.getElementById('missionNameInput');
+export const missionQuestionsInput = document.getElementById('missionQuestionsInput');
+export const missionAnswersInput = document.getElementById('missionAnswersInput');
+export const addMissionBtn = document.getElementById('addMissionBtn');
+export const missionList = document.getElementById('missionList');

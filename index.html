@@ -231,6 +231,7 @@
                 <div class="dashboard-tabs">
                     <button class="tab-button active" data-target="adminView" id="tabAdmin">관리자 정보</button>
                     <button class="tab-button" data-target="participantView" id="tabParticipants">참가자 관리</button>
+                    <button class="tab-button" data-target="scenarioView" id="tabScenarios">시나리오 관리</button>
                 </div>
 
                 <div class="dashboard-panels">
@@ -328,6 +329,41 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="dashboard-content hidden" id="scenarioView">
+                        <div class="welcome-card participants-card">
+                            <div class="participants-header">
+                                <div>
+                                    <p class="eyebrow">시나리오 관리</p>
+                                    <h2>시나리오 목록</h2>
+                                    <p class="welcome-message">관리자별 시나리오를 추가·수정하고 미션 구성을 확인하세요.</p>
+                                </div>
+                                <button class="btn-primary" id="addScenarioBtn">
+                                    <i class="fas fa-plus-circle"></i>
+                                    <span>시나리오 추가</span>
+                                </button>
+                            </div>
+
+                            <div class="table-wrapper">
+                                <table class="participant-table">
+                                    <thead>
+                                        <tr>
+                                            <th>제목</th>
+                                            <th>난이도</th>
+                                            <th>생성일</th>
+                                            <th>미션 수</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="scenarioTableBody">
+                                        <tr class="empty-row">
+                                            <td colspan="5">등록된 시나리오가 없습니다. 오른쪽 상단의 시나리오 추가 버튼을 눌러 새 데이터를 입력하세요.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -382,6 +418,75 @@
 
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" id="cancelEdit">취소</button>
+                    <button type="submit" class="btn-primary">
+                        <span>저장</span>
+                        <i class="fas fa-check"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 시나리오 추가/수정 모달 -->
+    <div class="modal-overlay hidden" id="scenarioModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div>
+                    <p class="eyebrow">시나리오 관리</p>
+                    <h2 id="scenarioModalTitle">시나리오 추가</h2>
+                </div>
+                <button class="icon-button" id="closeScenarioModal" aria-label="닫기">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form id="scenarioForm" class="modal-form">
+                <div class="input-group">
+                    <i class="fas fa-heading"></i>
+                    <input type="text" id="scenarioTitle" placeholder="시나리오 제목" required>
+                </div>
+
+                <div class="input-group">
+                    <i class="fas fa-signal"></i>
+                    <select id="scenarioDifficulty" required>
+                        <option value="easy">쉬움</option>
+                        <option value="medium">보통</option>
+                        <option value="hard">어려움</option>
+                    </select>
+                </div>
+
+                <div class="mission-builder">
+                    <div class="field-label-row">
+                        <label class="field-label" for="missionNameInput">미션 추가</label>
+                        <p class="input-hint">예상 질문/답변은 줄바꿈으로 구분해 입력하세요.</p>
+                    </div>
+                    <div class="grid two-column">
+                        <div class="input-group">
+                            <i class="fas fa-list-ol"></i>
+                            <input type="text" id="missionNameInput" placeholder="미션 이름" required>
+                        </div>
+                        <div class="mission-actions">
+                            <button type="button" class="btn-secondary" id="addMissionBtn">
+                                <i class="fas fa-plus"></i>
+                                <span>미션 추가</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="grid two-column">
+                        <div class="input-group">
+                            <i class="fas fa-question-circle"></i>
+                            <textarea id="missionQuestionsInput" placeholder="예상 질문 (한 줄에 하나씩)" rows="3"></textarea>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-comment-dots"></i>
+                            <textarea id="missionAnswersInput" placeholder="예상 답변 (한 줄에 하나씩)" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="mission-list" id="missionList"></div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="cancelScenario">취소</button>
                     <button type="submit" class="btn-primary">
                         <span>저장</span>
                         <i class="fas fa-check"></i>

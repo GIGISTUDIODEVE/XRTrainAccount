@@ -6,7 +6,9 @@ import {
     participantView,
     tabAdmin,
     tabParticipants,
-    participantCountEl
+    tabScenarios,
+    participantCountEl,
+    scenarioView
 } from './domElements.js';
 import { state } from './state.js';
 import { formatDate } from './utils.js';
@@ -25,13 +27,17 @@ export function setActivePage(pageKey) {
 }
 
 export function setDashboardTab(tabKey) {
-    if (!adminView || !participantView) return;
+    const tabMap = {
+        admin: { tab: tabAdmin, view: adminView },
+        participants: { tab: tabParticipants, view: participantView },
+        scenarios: { tab: tabScenarios, view: scenarioView }
+    };
 
-    const isAdmin = tabKey === 'admin';
-    tabAdmin?.classList.toggle('active', isAdmin);
-    tabParticipants?.classList.toggle('active', !isAdmin);
-    adminView.classList.toggle('hidden', !isAdmin);
-    participantView.classList.toggle('hidden', isAdmin);
+    Object.entries(tabMap).forEach(([key, { tab, view }]) => {
+        const isActive = key === tabKey;
+        tab?.classList.toggle('active', isActive);
+        view?.classList.toggle('hidden', !isActive);
+    });
 }
 
 export function updateDashboard(profile) {

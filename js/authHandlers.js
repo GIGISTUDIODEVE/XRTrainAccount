@@ -44,6 +44,7 @@ import {
     saveProfileIfAllowed
 } from './profile.js';
 import { loadParticipants } from './participants.js';
+import { loadScenarios } from './scenarios.js';
 import { setActivePage, showAuth, showDashboard } from './navigation.js';
 
 export function wireAuthEvents() {
@@ -85,6 +86,7 @@ export function initAuthListeners(onReady) {
             try {
                 await loadUserProfile(user);
                 await loadParticipants();
+                await loadScenarios();
             } catch (error) {
                 console.error('Profile load error (onAuthStateChanged):', error);
                 showToast(getFirestoreErrorMessage(error), 'warning');
