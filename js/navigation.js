@@ -9,7 +9,7 @@ import {
     participantCountEl
 } from './domElements.js';
 import { state } from './state.js';
-import { formatConditions, formatDate, formatGender, formatStatus } from './utils.js';
+import { formatDate } from './utils.js';
 import { renderParticipantTable } from './participants.js';
 import { syncEditFormWithProfile } from './profile.js';
 
@@ -37,18 +37,12 @@ export function setDashboardTab(tabKey) {
 export function updateDashboard(profile) {
     document.getElementById('userDisplayName').textContent = profile.fullName;
     document.getElementById('dashboardFullName').textContent = profile.fullName;
-    document.getElementById('dashboardUsername').textContent = profile.username;
     document.getElementById('dashboardEmail').textContent = profile.email;
+    document.getElementById('dashboardAffiliation').textContent = profile.affiliation || '-';
+    document.getElementById('dashboardPosition').textContent = profile.position || '-';
 
     const joinDate = profile.createdAt ? new Date(profile.createdAt) : new Date();
     document.getElementById('dashboardJoinDate').textContent = formatDate(joinDate);
-    document.getElementById('dashboardBirthDate').textContent = profile.birthDate || '-';
-    document.getElementById('dashboardAge').textContent = profile.age ?? '-';
-    document.getElementById('dashboardGender').textContent = formatGender(profile.gender);
-    document.getElementById('dashboardRegion').textContent = profile.region || '-';
-    document.getElementById('dashboardConditions').textContent = formatConditions(profile.conditions);
-    document.getElementById('dashboardStatus').textContent = formatStatus(profile.status);
-    document.getElementById('dashboardNotes').textContent = profile.notes || '-';
     participantCountEl.textContent = state.participants.length.toString();
 
     syncEditFormWithProfile();

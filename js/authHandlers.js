@@ -188,6 +188,8 @@ async function handleSignup(e) {
             username,
             fullName,
             email,
+            affiliation: '',
+            position: '',
             birthDate,
             age: Number(age),
             gender,

@@ -159,6 +159,8 @@ export function buildFallbackProfile(user) {
         email: user.email,
         fullName: user.displayName || user.email?.split('@')[0] || '사용자',
         username: user.email?.split('@')[0] || 'user',
+        affiliation: '',
+        position: '',
         birthDate: '',
         age: null,
         gender: '',
