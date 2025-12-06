@@ -61,19 +61,21 @@ export function renderContentTable() {
         const emptyRow = document.createElement('tr');
         emptyRow.className = 'empty-row';
         const td = document.createElement('td');
-        td.colSpan = 5;
+        td.colSpan = 6;
         td.textContent = '콘텐츠 기록이 없습니다. 시나리오 진행 후 데이터가 저장되면 이곳에서 확인할 수 있습니다.';
         emptyRow.appendChild(td);
         contentTableBody.appendChild(emptyRow);
         return;
     }
 
-    state.contents.forEach((record) => {
+    state.contents.forEach((record, index) => {
         const participantName = getParticipantName(record.participantUid);
         const scenarioInfo = getScenarioMeta(record.scenarioUid);
+        const rowIndex = index + 1;
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
+            <td>${rowIndex}</td>
             <td>${participantName}</td>
             <td>${formatDateTime(record.participatedAt)}</td>
             <td>${scenarioInfo.title}</td>
