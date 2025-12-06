@@ -21,7 +21,7 @@ import {
 } from './utils.js';
 import { addDoc, collection, getDocs, query, serverTimestamp, where } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 import { db } from './firebaseConfig.js';
-import { normalizeContentRecord } from './contents.js';
+import { normalizeContentRecord, renderContentTable } from './contents.js';
 
 const DEFAULT_TOTAL_PLAY_TIME = 300;
 const CONTENT_COLLECTION = 'contents';
@@ -162,6 +162,7 @@ export async function loadTestRecords() {
         state.contents = records;
         state.testRecords = sortRecords(records);
         renderTestRecordTable();
+        renderContentTable();
     } catch (error) {
         if (!isFirestorePermissionError(error)) {
             console.error('Test records load error:', error);
@@ -308,6 +309,7 @@ export function wireTestPageEvents(onRecordAdded) {
             state.testRecords = sortRecords([savedRecord, ...state.testRecords]);
             state.contents = sortRecords([savedRecord, ...state.contents]);
             renderTestRecordTable();
+            renderContentTable();
             showToast('테스트용 콘텐츠 완료 기록이 추가되었습니다.', 'success');
             resetTestForm();
             onRecordAdded?.(savedRecord);

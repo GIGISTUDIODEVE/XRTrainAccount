@@ -45,7 +45,7 @@ import {
 } from './profile.js';
 import { loadParticipants } from './participants.js';
 import { loadScenarios } from './scenarios.js';
-import { loadContents } from './contents.js';
+import { loadContents, renderContentTable } from './contents.js';
 import { setActivePage, showAuth, showDashboard } from './navigation.js';
 
 export function wireAuthEvents() {
@@ -95,6 +95,7 @@ export function initAuthListeners(onReady) {
             }
 
             showDashboard();
+            renderContentTable();
         } else {
             state.currentUser = null;
             state.testRecords = [];
@@ -309,6 +310,7 @@ async function finalizeLoginFlow(user, message) {
         showToast(getFirestoreErrorMessage(error), 'warning');
     }
 
+    renderContentTable();
     showToast(message, 'success');
     showDashboard();
 }
