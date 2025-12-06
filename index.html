@@ -311,29 +311,77 @@
                                 </div>
                             </div>
 
-                            <div class="table-wrapper">
-                                <table class="participant-table">
-                                    <thead>
-                                        <tr>
-                                            <th>이름</th>
-                                            <th>이메일</th>
-                                            <th>가입일</th>
-                                            <th>생년월일 / 만나이</th>
-                                            <th>성별</th>
-                                            <th>거주지역</th>
-                                            <th>질환명</th>
-                                            <th>상태</th>
-                                            <th>기타</th>
-                                            <th>마지막 접속</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="participantTableBody">
-                                        <tr class="empty-row">
-                                            <td colspan="11">등록된 참가자가 없습니다. 오른쪽 상단의 참가자 추가 버튼을 눌러 새 데이터를 입력하세요.</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div class="table-wrapper participant-table-wrapper">
+                                <div class="participant-table-scroll" id="participantTableScroll">
+                                    <table class="participant-table">
+                                        <thead>
+                                            <tr>
+                                                <th>
+                                                    <button class="sort-button participant-sort-button" type="button" data-sort-key="fullName">
+                                                        <span>이름</span>
+                                                        <span class="sort-icon" aria-hidden="true">↕</span>
+                                                    </button>
+                                                </th>
+                                                <th>
+                                                    <button class="sort-button participant-sort-button" type="button" data-sort-key="email">
+                                                        <span>이메일</span>
+                                                        <span class="sort-icon" aria-hidden="true">↕</span>
+                                                    </button>
+                                                </th>
+                                                <th>
+                                                    <button class="sort-button participant-sort-button" type="button" data-sort-key="createdAt">
+                                                        <span>가입일</span>
+                                                        <span class="sort-icon" aria-hidden="true">↕</span>
+                                                    </button>
+                                                </th>
+                                                <th>
+                                                    <button class="sort-button participant-sort-button" type="button" data-sort-key="birthDate">
+                                                        <span>생년월일 / 만나이</span>
+                                                        <span class="sort-icon" aria-hidden="true">↕</span>
+                                                    </button>
+                                                </th>
+                                                <th>성별</th>
+                                                <th>
+                                                    <button class="sort-button participant-sort-button" type="button" data-sort-key="region">
+                                                        <span>거주지역</span>
+                                                        <span class="sort-icon" aria-hidden="true">↕</span>
+                                                    </button>
+                                                </th>
+                                                <th>질환명</th>
+                                                <th>
+                                                    <button class="sort-button participant-sort-button" type="button" data-sort-key="status">
+                                                        <span>상태</span>
+                                                        <span class="sort-icon" aria-hidden="true">↕</span>
+                                                    </button>
+                                                </th>
+                                                <th>기타</th>
+                                                <th>
+                                                    <button class="sort-button participant-sort-button" type="button" data-sort-key="lastSeen">
+                                                        <span>마지막 접속</span>
+                                                        <span class="sort-icon" aria-hidden="true">↕</span>
+                                                    </button>
+                                                </th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="participantTableBody">
+                                            <tr class="empty-row">
+                                                <td colspan="11">등록된 참가자가 없습니다. 오른쪽 상단의 참가자 추가 버튼을 눌러 새 데이터를 입력하세요.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="pagination table-pagination participants-pagination">
+                                    <button class="btn-secondary" id="participantPrevPage" aria-label="이전 페이지">
+                                        <span class="chevron">&lt;</span>
+                                        <span>이전</span>
+                                    </button>
+                                    <div class="page-numbers" id="participantPageNumbers"></div>
+                                    <button class="btn-secondary" id="participantNextPage" aria-label="다음 페이지">
+                                        <span>다음</span>
+                                        <span class="chevron">&gt;</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -346,29 +394,68 @@
                                     <h2>시나리오 목록</h2>
                                     <p class="welcome-message">관리자별 시나리오를 추가·수정하고 미션 구성을 확인하세요.</p>
                                 </div>
-                                <button class="btn-primary" id="addScenarioBtn">
-                                    <i class="fas fa-plus-circle"></i>
-                                    <span>시나리오 추가</span>
-                                </button>
+                                <div class="participant-actions">
+                                    <div class="search-input" role="search">
+                                        <i class="fas fa-search" aria-hidden="true"></i>
+                                        <input type="search" id="scenarioSearch" placeholder="제목으로 검색" aria-label="시나리오 제목 검색">
+                                    </div>
+                                    <button class="btn-primary" id="addScenarioBtn">
+                                        <i class="fas fa-plus-circle"></i>
+                                        <span>시나리오 추가</span>
+                                    </button>
+                                </div>
                             </div>
 
-                            <div class="table-wrapper">
-                                <table class="participant-table">
-                                    <thead>
-                                        <tr>
-                                            <th>제목</th>
-                                            <th>난이도</th>
-                                            <th>생성일</th>
-                                            <th>미션 수</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="scenarioTableBody">
-                                        <tr class="empty-row">
-                                            <td colspan="5">등록된 시나리오가 없습니다. 오른쪽 상단의 시나리오 추가 버튼을 눌러 새 데이터를 입력하세요.</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div class="table-wrapper scenario-table-wrapper">
+                                <div class="participant-table-scroll" id="scenarioTableScroll">
+                                    <table class="participant-table">
+                                        <thead>
+                                            <tr>
+                                                <th>
+                                                    <button class="sort-button scenario-sort-button" type="button" data-sort-key="title">
+                                                        <span>제목</span>
+                                                        <span class="sort-icon" aria-hidden="true">↕</span>
+                                                    </button>
+                                                </th>
+                                                <th>
+                                                    <button class="sort-button scenario-sort-button" type="button" data-sort-key="difficulty">
+                                                        <span>난이도</span>
+                                                        <span class="sort-icon" aria-hidden="true">↕</span>
+                                                    </button>
+                                                </th>
+                                                <th>
+                                                    <button class="sort-button scenario-sort-button" type="button" data-sort-key="createdAt">
+                                                        <span>생성일</span>
+                                                        <span class="sort-icon" aria-hidden="true">↕</span>
+                                                    </button>
+                                                </th>
+                                                <th>
+                                                    <button class="sort-button scenario-sort-button" type="button" data-sort-key="missionCount">
+                                                        <span>미션 수</span>
+                                                        <span class="sort-icon" aria-hidden="true">↕</span>
+                                                    </button>
+                                                </th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="scenarioTableBody">
+                                            <tr class="empty-row">
+                                                <td colspan="5">등록된 시나리오가 없습니다. 오른쪽 상단의 시나리오 추가 버튼을 눌러 새 데이터를 입력하세요.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="pagination table-pagination scenarios-pagination">
+                                    <button class="btn-secondary" id="scenarioPrevPage" aria-label="이전 페이지">
+                                        <span class="chevron">&lt;</span>
+                                        <span>이전</span>
+                                    </button>
+                                    <div class="page-numbers" id="scenarioPageNumbers"></div>
+                                    <button class="btn-secondary" id="scenarioNextPage" aria-label="다음 페이지">
+                                        <span>다음</span>
+                                        <span class="chevron">&gt;</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>

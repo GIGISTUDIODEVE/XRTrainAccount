@@ -707,17 +707,21 @@ body {
     border-radius: 12px;
 }
 
-.content-table-wrapper {
+.content-table-wrapper,
+.participant-table-wrapper,
+.scenario-table-wrapper {
     display: flex;
     flex-direction: column;
 }
 
-.content-table-scroll {
+.content-table-scroll,
+.participant-table-scroll {
     max-height: 60vh;
     overflow-y: auto;
 }
 
-.content-pagination {
+.content-pagination,
+.table-pagination {
     display: flex;
     gap: 16px;
     align-items: center;
@@ -728,7 +732,8 @@ body {
     background: var(--bg-primary);
 }
 
-.content-pagination .page-numbers {
+.content-pagination .page-numbers,
+.table-pagination .page-numbers {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -736,7 +741,8 @@ body {
     color: var(--text-secondary);
 }
 
-.content-pagination .page-number {
+.content-pagination .page-number,
+.table-pagination .page-number {
     border: none;
     background: transparent;
     color: var(--text-primary);
@@ -747,27 +753,33 @@ body {
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-.content-pagination .page-number.active {
+.content-pagination .page-number.active,
+.table-pagination .page-number.active {
     background: var(--primary-color);
     color: #fff;
 }
 
-.content-pagination .page-number:hover:not(.active) {
+.content-pagination .page-number:hover:not(.active),
+.table-pagination .page-number:hover:not(.active) {
     background: var(--bg-secondary);
 }
 
 .content-pagination .page-ellipsis,
-.content-pagination .page-separator {
+.content-pagination .page-separator,
+.table-pagination .page-ellipsis,
+.table-pagination .page-separator {
     color: var(--text-secondary);
     font-weight: 700;
 }
 
-.content-pagination .chevron {
+.content-pagination .chevron,
+.table-pagination .chevron {
     font-weight: 900;
     font-size: 14px;
 }
 
-.content-pagination .btn-secondary {
+.content-pagination .btn-secondary,
+.table-pagination .btn-secondary {
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -775,12 +787,14 @@ body {
     font-weight: 600;
 }
 
-.content-pagination .btn-secondary:disabled {
+.content-pagination .btn-secondary:disabled,
+.table-pagination .btn-secondary:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
-.content-pagination .page-indicator {
+.content-pagination .page-indicator,
+.table-pagination .page-indicator {
     font-weight: 700;
     color: var(--text-secondary);
     min-width: 64px;

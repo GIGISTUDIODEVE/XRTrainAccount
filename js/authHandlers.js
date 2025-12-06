@@ -283,8 +283,20 @@ async function handleLogout() {
         state.currentUser = null;
         state.participants = [];
         state.participantConditionList = [];
+        state.participantSearchQuery = '';
+        state.participantPage = 1;
+        state.participantSortKey = 'createdAt';
+        state.participantSortDirection = 'desc';
         state.contents = [];
         state.contentSearchQuery = '';
+        state.contentPage = 1;
+        state.contentSortKey = 'participatedAt';
+        state.contentSortDirection = 'desc';
+        state.scenarios = [];
+        state.scenarioSearchQuery = '';
+        state.scenarioPage = 1;
+        state.scenarioSortKey = 'createdAt';
+        state.scenarioSortDirection = 'desc';
         showToast('로그아웃되었습니다.', 'success');
         setTimeout(() => {
             showAuth();
