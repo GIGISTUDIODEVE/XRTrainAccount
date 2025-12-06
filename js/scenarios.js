@@ -29,7 +29,13 @@ import {
     scenarioTitleInput
 } from './domElements.js';
 import { state } from './state.js';
-import { formatDate, getFirestoreErrorMessage, isFirestorePermissionError, showToast } from './utils.js';
+import {
+    formatDate,
+    formatDifficulty,
+    getFirestoreErrorMessage,
+    isFirestorePermissionError,
+    showToast
+} from './utils.js';
 
 const MAX_EXPECTED_ITEMS = 3;
 
@@ -412,18 +418,6 @@ export async function handleScenarioSubmit(event, onScenariosUpdated) {
     } catch (error) {
         console.error('Scenario save error:', error);
         showToast(getFirestoreErrorMessage(error), 'error');
-    }
-}
-
-function formatDifficulty(value) {
-    switch (value) {
-        case 'medium':
-            return '보통';
-        case 'hard':
-            return '어려움';
-        case 'easy':
-        default:
-            return '쉬움';
     }
 }
 

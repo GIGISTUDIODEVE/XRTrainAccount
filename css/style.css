@@ -639,6 +639,10 @@ body {
     padding: 20px 20px 28px;
 }
 
+.contents-card {
+    padding: 20px 20px 28px;
+}
+
 .participants-header {
     display: flex;
     justify-content: space-between;
@@ -647,7 +651,21 @@ body {
     margin-bottom: 12px;
 }
 
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
 .participant-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.content-actions {
     display: flex;
     align-items: center;
     gap: 10px;

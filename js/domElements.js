@@ -10,9 +10,11 @@ export const pages = {
 export const tabAdmin = document.getElementById('tabAdmin');
 export const tabParticipants = document.getElementById('tabParticipants');
 export const tabScenarios = document.getElementById('tabScenarios');
+export const tabContents = document.getElementById('tabContents');
 export const adminView = document.getElementById('adminView');
 export const participantView = document.getElementById('participantView');
 export const scenarioView = document.getElementById('scenarioView');
+export const contentView = document.getElementById('contentView');
 
 export const loginFormElement = document.getElementById('loginFormElement');
 export const signupFormElement = document.getElementById('signupFormElement');
@@ -82,3 +84,5 @@ export const addAnswerBtn = document.getElementById('addAnswerBtn');
 export const missionQuestionsList = document.getElementById('missionQuestionsList');
 export const missionAnswersList = document.getElementById('missionAnswersList');
 export const missionList = document.getElementById('missionList');
+export const contentTableBody = document.getElementById('contentTableBody');
+export const refreshContentsBtn = document.getElementById('refreshContentsBtn');

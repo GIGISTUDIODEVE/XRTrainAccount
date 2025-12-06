@@ -45,6 +45,7 @@ import {
 } from './profile.js';
 import { loadParticipants } from './participants.js';
 import { loadScenarios } from './scenarios.js';
+import { loadContents } from './contents.js';
 import { setActivePage, showAuth, showDashboard } from './navigation.js';
 
 export function wireAuthEvents() {
@@ -87,6 +88,7 @@ export function initAuthListeners(onReady) {
                 await loadUserProfile(user);
                 await loadParticipants();
                 await loadScenarios();
+                await loadContents();
             } catch (error) {
                 console.error('Profile load error (onAuthStateChanged):', error);
                 showToast(getFirestoreErrorMessage(error), 'warning');
@@ -273,6 +275,7 @@ async function handleLogout() {
         state.currentUser = null;
         state.participants = [];
         state.participantConditionList = [];
+        state.contents = [];
         showToast('로그아웃되었습니다.', 'success');
         setTimeout(() => {
             showAuth();
@@ -293,6 +296,8 @@ async function finalizeLoginFlow(user, message) {
     try {
         await loadUserProfile(user);
         await loadParticipants();
+        await loadScenarios();
+        await loadContents();
     } catch (error) {
         showToast(getFirestoreErrorMessage(error), 'warning');
     }

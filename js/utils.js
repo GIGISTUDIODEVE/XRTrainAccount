@@ -34,6 +34,34 @@ export function formatStatus(value) {
     return map[value] || '-';
 }
 
+export function formatDifficulty(value) {
+    switch (value) {
+        case 'medium':
+            return '보통';
+        case 'hard':
+            return '어려움';
+        case 'easy':
+        default:
+            return '쉬움';
+    }
+}
+
+export function formatDurationSeconds(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) return '-';
+    const totalSeconds = Math.floor(seconds);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const remainingSeconds = totalSeconds % 60;
+
+    if (hours > 0) {
+        return `${hours}시간 ${minutes.toString().padStart(2, '0')}분 ${remainingSeconds
+            .toString()
+            .padStart(2, '0')}초`;
+    }
+
+    return `${minutes}분 ${remainingSeconds.toString().padStart(2, '0')}초`;
+}
+
 export function normalizeConditions(value) {
     if (Array.isArray(value)) {
         return value.map((item) => String(item).trim()).filter(Boolean);
