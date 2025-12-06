@@ -233,6 +233,7 @@
                     <button class="tab-button" data-target="participantView" id="tabParticipants">참가자 관리</button>
                     <button class="tab-button" data-target="scenarioView" id="tabScenarios">시나리오 관리</button>
                     <button class="tab-button" data-target="contentView" id="tabContents">콘텐츠 관리</button>
+                    <button class="tab-button" data-target="testView" id="tabTest">테스트 페이지</button>
                 </div>
 
                 <div class="dashboard-panels">
@@ -405,6 +406,89 @@
                                         </tr>
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-content hidden" id="testView">
+                        <div class="welcome-card test-card">
+                            <div class="participants-header">
+                                <div>
+                                    <p class="eyebrow">테스트 페이지</p>
+                                    <h2>시나리오 플레이 기록 시뮬레이션</h2>
+                                    <p class="welcome-message">관리 중인 참가자와 시나리오를 선택해 테스트용 완료 데이터를 기록하세요.</p>
+                                </div>
+                            </div>
+
+                            <div class="test-grid">
+                                <div class="test-form">
+                                    <div class="input-group">
+                                        <label class="field-label" for="testParticipantSelect">참가자 선택</label>
+                                        <select id="testParticipantSelect">
+                                            <option value="">참가자 선택</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="input-group">
+                                        <label class="field-label" for="testScenarioSelect">시나리오 선택</label>
+                                        <select id="testScenarioSelect">
+                                            <option value="">시나리오 선택</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="grid two-column">
+                                        <div class="input-group">
+                                            <label class="field-label" for="testParticipatedAt">완료 일시</label>
+                                            <input type="datetime-local" id="testParticipatedAt">
+                                        </div>
+                                        <div class="input-group">
+                                            <label class="field-label" for="testTotalPlayTime">총 플레이 시간(초)</label>
+                                            <input type="number" id="testTotalPlayTime" min="0" value="300">
+                                        </div>
+                                    </div>
+
+                                    <div class="grid two-column">
+                                        <div class="input-group">
+                                            <label class="field-label" for="testRetryCount">재도전 횟수</label>
+                                            <input type="number" id="testRetryCount" min="0" value="0">
+                                        </div>
+                                        <div class="input-group">
+                                            <label class="field-label" for="testNotes">비고</label>
+                                            <input type="text" id="testNotes" placeholder="메모를 남기세요 (선택)">
+                                        </div>
+                                    </div>
+
+                                    <div class="mission-inputs" id="testMissionList">
+                                        <div class="empty-helper">시나리오를 선택하면 미션 상태를 입력할 수 있습니다.</div>
+                                    </div>
+
+                                    <div class="modal-actions">
+                                        <button class="btn-primary" id="testAddRecordBtn">
+                                            <span>콘텐츠 완료 기록 추가</span>
+                                            <i class="fas fa-check-circle"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="table-wrapper">
+                                    <table class="participant-table">
+                                        <thead>
+                                            <tr>
+                                                <th>참가자</th>
+                                                <th>시나리오</th>
+                                                <th>완료 일시</th>
+                                                <th>총 플레이 시간</th>
+                                                <th>재도전</th>
+                                                <th>미션 결과</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="testRecordTableBody">
+                                            <tr class="empty-row">
+                                                <td colspan="6">테스트 기록이 없습니다. 왼쪽에서 데이터를 입력해 완료를 시뮬레이션하세요.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>

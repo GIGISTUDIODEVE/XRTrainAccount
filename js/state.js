@@ -9,5 +9,6 @@ export const state = {
     scenarioMissions: [],
     editingParticipantId: null,
     editingScenarioId: null,
-    editingMissionIndex: null
+    editingMissionIndex: null,
+    testRecords: []
 };
