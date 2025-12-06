@@ -4,10 +4,12 @@ export const state = {
     participantConditionList: [],
     participants: [],
     contents: [],
+    contentPage: 1,
     participantSearchQuery: '',
     scenarios: [],
     scenarioMissions: [],
     editingParticipantId: null,
     editingScenarioId: null,
-    editingMissionIndex: null
+    editingMissionIndex: null,
+    testRecords: []
 };

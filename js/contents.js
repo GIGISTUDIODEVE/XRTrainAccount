@@ -1,6 +1,6 @@
 import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 import { db } from './firebaseConfig.js';
-import { contentTableBody, refreshContentsBtn } from './domElements.js';
+import { contentNextPageBtn, contentPageNumbers, contentPrevPageBtn, contentTableBody, contentTableScroll, refreshContentsBtn } from './domElements.js';
 import { state } from './state.js';
 import {
     formatDateTime,
@@ -10,6 +10,8 @@ import {
     isFirestorePermissionError,
     showToast
 } from './utils.js';
+
+const CONTENT_PAGE_SIZE = 25;
 
 function getParticipantName(participantUid) {
     const participant = state.participants.find((item) => item.id === participantUid || item.uid === participantUid);
@@ -24,7 +26,7 @@ function getScenarioMeta(scenarioUid) {
     };
 }
 
-function normalizeContentRecord(data, id) {
+export function normalizeContentRecord(data, id) {
     return {
         id,
         adminId: data.adminId || '',
@@ -45,6 +47,7 @@ export async function loadContents() {
         const contentsQuery = query(collection(db, 'contents'), where('adminId', '==', state.currentUser.uid));
         const snapshot = await getDocs(contentsQuery);
         state.contents = snapshot.docs.map((docSnap) => normalizeContentRecord(docSnap.data(), docSnap.id));
+        updateContentPageAfterLoad();
     } catch (error) {
         if (!isFirestorePermissionError(error)) {
             console.error('Contents load error:', error);
@@ -53,27 +56,49 @@ export async function loadContents() {
     }
 }
 
-export function renderContentTable() {
-    if (!contentTableBody) return;
-    contentTableBody.innerHTML = '';
-
+function updateContentPageAfterLoad() {
     if (!state.contents.length) {
-        const emptyRow = document.createElement('tr');
-        emptyRow.className = 'empty-row';
-        const td = document.createElement('td');
-        td.colSpan = 5;
-        td.textContent = '콘텐츠 기록이 없습니다. 시나리오 진행 후 데이터가 저장되면 이곳에서 확인할 수 있습니다.';
-        emptyRow.appendChild(td);
-        contentTableBody.appendChild(emptyRow);
+        state.contentPage = 1;
         return;
     }
 
-    state.contents.forEach((record) => {
+    const totalPages = Math.max(1, Math.ceil(state.contents.length / CONTENT_PAGE_SIZE));
+    const safeCurrent = Math.min(Math.max(state.contentPage, 1), totalPages);
+    state.contentPage = safeCurrent;
+}
+
+export function renderContentTable() {
+    if (!contentTableBody) return;
+    updateContentPageAfterLoad();
+    contentTableBody.innerHTML = '';
+
+    const totalPages = Math.ceil(state.contents.length / CONTENT_PAGE_SIZE);
+    const hasContents = Boolean(state.contents.length);
+
+    if (!hasContents) {
+        const emptyRow = document.createElement('tr');
+        emptyRow.className = 'empty-row';
+        const td = document.createElement('td');
+        td.colSpan = 6;
+        td.textContent = '콘텐츠 기록이 없습니다. 시나리오 진행 후 데이터가 저장되면 이곳에서 확인할 수 있습니다.';
+        emptyRow.appendChild(td);
+        contentTableBody.appendChild(emptyRow);
+        renderContentPagination(totalPages);
+        return;
+    }
+
+    const startIndex = (state.contentPage - 1) * CONTENT_PAGE_SIZE;
+    const endIndex = startIndex + CONTENT_PAGE_SIZE;
+    const pageRecords = state.contents.slice(startIndex, endIndex);
+
+    pageRecords.forEach((record, index) => {
         const participantName = getParticipantName(record.participantUid);
         const scenarioInfo = getScenarioMeta(record.scenarioUid);
+        const rowIndex = startIndex + index + 1;
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
+            <td>${rowIndex}</td>
             <td>${participantName}</td>
             <td>${formatDateTime(record.participatedAt)}</td>
             <td>${scenarioInfo.title}</td>
@@ -83,6 +108,78 @@ export function renderContentTable() {
 
         contentTableBody.appendChild(tr);
     });
+
+    renderContentPagination(totalPages);
+    resetContentScroll();
+}
+
+function renderContentPagination(totalPages) {
+    if (!contentPrevPageBtn || !contentNextPageBtn || !contentPageNumbers) return;
+
+    const hasContents = Boolean(state.contents.length);
+    const safeTotalPages = hasContents ? Math.max(totalPages, 1) : 0;
+
+    contentPageNumbers.innerHTML = '';
+    const pages = buildPageList(safeTotalPages, hasContents ? state.contentPage : 0);
+    pages.forEach((page, index) => {
+        if (page === 'ellipsis') {
+            const ellipsis = document.createElement('span');
+            ellipsis.className = 'page-ellipsis';
+            ellipsis.textContent = '...';
+            contentPageNumbers.appendChild(ellipsis);
+        } else {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `page-number${page === state.contentPage ? ' active' : ''}`;
+            button.textContent = page;
+            button.addEventListener('click', () => {
+                if (state.contentPage === page) return;
+                state.contentPage = page;
+                renderContentTable();
+            });
+            contentPageNumbers.appendChild(button);
+        }
+
+        const needsSeparator = index < pages.length - 1;
+        if (needsSeparator) {
+            const separator = document.createElement('span');
+            separator.className = 'page-separator';
+            separator.textContent = '.';
+            contentPageNumbers.appendChild(separator);
+        }
+    });
+
+    contentPrevPageBtn.disabled = !hasContents || state.contentPage <= 1;
+    contentNextPageBtn.disabled = !hasContents || state.contentPage >= safeTotalPages;
+}
+
+function buildPageList(totalPages, currentPage) {
+    if (totalPages <= 1) return totalPages === 1 ? [1] : [];
+    if (totalPages <= 3) {
+        return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+    if (totalPages <= 7) {
+        return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    const pages = [1];
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+
+    if (start > 2) {
+        pages.push('ellipsis');
+    }
+
+    for (let page = start; page <= end; page += 1) {
+        pages.push(page);
+    }
+
+    if (end < totalPages - 1) {
+        pages.push('ellipsis');
+    }
+
+    pages.push(totalPages);
+    return pages;
 }
 
 export function wireContentEvents(onRefresh) {
@@ -91,4 +188,23 @@ export function wireContentEvents(onRefresh) {
         renderContentTable();
         onRefresh?.();
     });
+
+    contentPrevPageBtn?.addEventListener('click', () => {
+        if (state.contentPage <= 1) return;
+        state.contentPage -= 1;
+        renderContentTable();
+    });
+
+    contentNextPageBtn?.addEventListener('click', () => {
+        const totalPages = Math.ceil(state.contents.length / CONTENT_PAGE_SIZE);
+        if (state.contentPage >= totalPages) return;
+        state.contentPage += 1;
+        renderContentTable();
+    });
+}
+
+function resetContentScroll() {
+    if (contentTableScroll) {
+        contentTableScroll.scrollTop = 0;
+    }
 }
