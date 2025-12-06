@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>콘텐츠 완료 테스트</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232256F5'/%3E%3Cpath d='M16 32h32' stroke='%23fff' stroke-width='6' stroke-linecap='round'/%3E%3Cpath d='M32 16v32' stroke='%23fff' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E'>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+</head>
+<body class="test-page">
+    <main class="test-container">
+        <header class="test-header">
+            <div>
+                <p class="eyebrow">테스트 도구</p>
+                <h1>콘텐츠 완료 기록 만들기</h1>
+                <p>웹에서 Firestore <code>contents</code> 컬렉션에 테스트 기록을 작성해 로직을 검증하세요.</p>
+            </div>
+            <div class="header-actions">
+                <a class="btn-secondary" href="./" aria-label="대시보드로 이동">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>대시보드로 돌아가기</span>
+                </a>
+            </div>
+        </header>
+
+        <section class="card test-card">
+            <div class="card-title-row">
+                <div>
+                    <p class="eyebrow">인증 (선택)</p>
+                    <h2>테스트 계정 로그인</h2>
+                    <p class="input-hint">보안 규칙에 따라 로그인하지 않으면 쓰기 권한이 없을 수 있습니다.</p>
+                </div>
+                <div class="login-status" id="authStatus">로그인 필요</div>
+            </div>
+            <div class="grid two-column">
+                <div class="input-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" id="authEmail" placeholder="이메일">
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" id="authPassword" placeholder="비밀번호">
+                </div>
+            </div>
+            <div class="test-actions">
+                <button type="button" class="btn-primary" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>로그인</span>
+                </button>
+                <button type="button" class="btn-secondary" id="logoutBtn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>로그아웃</span>
+                </button>
+            </div>
+            <div class="hint-box">
+                <i class="fas fa-info-circle"></i>
+                <div>
+                    <strong>테스트 계정</strong>
+                    <p>권한이 있는 이메일/비밀번호를 입력한 후 로그인을 누르세요.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card test-card">
+            <div class="card-title-row">
+                <div>
+                    <p class="eyebrow">콘텐츠 기록</p>
+                    <h2>페이로드 작성</h2>
+                    <p class="input-hint">입력한 값은 그대로 Firestore에 저장됩니다. 필수 항목을 확인하세요.</p>
+                </div>
+                <button type="button" class="btn-secondary" id="fillSample">
+                    <i class="fas fa-magic"></i>
+                    <span>예시 값 채우기</span>
+                </button>
+            </div>
+
+            <form id="contentTestForm" class="test-form">
+                <div class="grid two-column">
+                    <div class="input-group">
+                        <i class="fas fa-user-shield"></i>
+                        <input type="text" id="adminId" placeholder="관리자 UID" required>
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="participantUid" placeholder="참가자 UID" required>
+                    </div>
+                </div>
+
+                <div class="grid two-column">
+                    <div class="input-group">
+                        <i class="fas fa-clipboard-list"></i>
+                        <input type="text" id="scenarioUid" placeholder="시나리오 UID" required>
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-heading"></i>
+                        <input type="text" id="scenarioTitle" placeholder="시나리오 제목" required>
+                    </div>
+                </div>
+
+                <div class="grid two-column">
+                    <div class="input-group">
+                        <i class="fas fa-signal"></i>
+                        <select id="scenarioDifficulty" required>
+                            <option value="easy">쉬움</option>
+                            <option value="medium">보통</option>
+                            <option value="hard">어려움</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-calendar"></i>
+                        <input type="datetime-local" id="participatedAt" required>
+                    </div>
+                </div>
+
+                <div class="grid two-column">
+                    <div class="input-group">
+                        <i class="fas fa-redo"></i>
+                        <input type="number" id="retryCount" min="0" value="0" placeholder="재시도 횟수" required>
+                    </div>
+                    <div class="input-group">
+                        <i class="fas fa-stopwatch"></i>
+                        <input type="number" step="0.1" id="totalPlayTime" min="0" value="0" placeholder="총 플레이 시간(초)" required>
+                    </div>
+                </div>
+
+                <div class="mission-builder test-builder">
+                    <div class="field-label-row">
+                        <div>
+                            <label class="field-label" for="missionNameInput">미션 결과</label>
+                            <p class="input-hint">미션별 성공 여부와 예상 Q/A, 답변 시간을 입력하세요. (예상 항목은 최대 3개)</p>
+                        </div>
+                        <button type="button" class="btn-secondary" id="addMissionBtn">
+                            <i class="fas fa-plus"></i>
+                            <span>미션 추가</span>
+                        </button>
+                    </div>
+                    <div class="mission-list" id="missionList">
+                        <div class="chip-empty">미션을 추가하세요.</div>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary">
+                        <span>콘텐츠 기록 저장</span>
+                        <i class="fas fa-check"></i>
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <section class="card log-card">
+            <div class="card-title-row">
+                <div>
+                    <p class="eyebrow">결과</p>
+                    <h2>저장 로그</h2>
+                </div>
+            </div>
+            <pre id="logPanel" class="log-panel">대기 중...</pre>
+        </section>
+    </main>
+
+    <div class="toast hidden" id="toast">
+        <i class="fas fa-info-circle"></i>
+        <span id="toastMessage"></span>
+    </div>
+
+    <script type="module" src="js/contentTest.js"></script>
+</body>
+</html>
