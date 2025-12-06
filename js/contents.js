@@ -1,6 +1,14 @@
 import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 import { db } from './firebaseConfig.js';
-import { contentNextPageBtn, contentPageNumbers, contentPrevPageBtn, contentTableBody, contentTableScroll, refreshContentsBtn } from './domElements.js';
+import {
+    contentNextPageBtn,
+    contentPageNumbers,
+    contentPrevPageBtn,
+    contentSortButtons,
+    contentTableBody,
+    contentTableScroll,
+    refreshContentsBtn
+} from './domElements.js';
 import { state } from './state.js';
 import {
     formatDateTime,
@@ -12,6 +20,18 @@ import {
 } from './utils.js';
 
 const CONTENT_PAGE_SIZE = 25;
+const DEFAULT_SORT_DIRECTION = {
+    participantName: 'asc',
+    participatedAt: 'desc',
+    scenarioTitle: 'asc',
+    difficulty: 'asc',
+    totalPlayTime: 'desc'
+};
+const difficultyOrder = {
+    easy: 1,
+    medium: 2,
+    hard: 3
+};
 
 function getParticipantName(participantUid) {
     const participant = state.participants.find((item) => item.id === participantUid || item.uid === participantUid);
@@ -67,13 +87,71 @@ function updateContentPageAfterLoad() {
     state.contentPage = safeCurrent;
 }
 
+function getScenarioDifficultyValue(scenarioUid) {
+    const scenario = state.scenarios.find((item) => item.id === scenarioUid || item.uid === scenarioUid);
+    return difficultyOrder[scenario?.difficulty] || 0;
+}
+
+function getSortValue(record, sortKey) {
+    switch (sortKey) {
+        case 'participantName':
+            return getParticipantName(record.participantUid);
+        case 'scenarioTitle':
+            return getScenarioMeta(record.scenarioUid).title;
+        case 'difficulty':
+            return getScenarioDifficultyValue(record.scenarioUid);
+        case 'totalPlayTime':
+            return Number.isFinite(record.totalPlayTime) ? record.totalPlayTime : null;
+        case 'participatedAt':
+        default:
+            return record.participatedAt ? new Date(record.participatedAt).getTime() : null;
+    }
+}
+
+function compareValues(a, b, direction) {
+    if (a === b) return 0;
+
+    const isAsc = direction === 'asc';
+    const aEmpty = a === null || a === undefined;
+    const bEmpty = b === null || b === undefined;
+
+    if (aEmpty && bEmpty) return 0;
+    if (aEmpty) return isAsc ? 1 : -1;
+    if (bEmpty) return isAsc ? -1 : 1;
+
+    if (typeof a === 'string' || typeof b === 'string') {
+        const aString = String(a);
+        const bString = String(b);
+        return isAsc ? aString.localeCompare(bString, 'ko') : bString.localeCompare(aString, 'ko');
+    }
+
+    if (a > b) return isAsc ? 1 : -1;
+    if (a < b) return isAsc ? -1 : 1;
+    return 0;
+}
+
+function getSortedContents() {
+    const sortKey = state.contentSortKey || 'participatedAt';
+    const sortDirection = state.contentSortDirection || DEFAULT_SORT_DIRECTION[sortKey] || 'desc';
+    const records = [...state.contents];
+
+    records.sort((a, b) => {
+        const aValue = getSortValue(a, sortKey);
+        const bValue = getSortValue(b, sortKey);
+        return compareValues(aValue, bValue, sortDirection);
+    });
+
+    return records;
+}
+
 export function renderContentTable() {
     if (!contentTableBody) return;
     updateContentPageAfterLoad();
     contentTableBody.innerHTML = '';
 
-    const totalPages = Math.ceil(state.contents.length / CONTENT_PAGE_SIZE);
-    const hasContents = Boolean(state.contents.length);
+    const sortedRecords = getSortedContents();
+    const totalPages = Math.ceil(sortedRecords.length / CONTENT_PAGE_SIZE);
+    const hasContents = Boolean(sortedRecords.length);
 
     if (!hasContents) {
         const emptyRow = document.createElement('tr');
@@ -83,13 +161,14 @@ export function renderContentTable() {
         td.textContent = '콘텐츠 기록이 없습니다. 시나리오 진행 후 데이터가 저장되면 이곳에서 확인할 수 있습니다.';
         emptyRow.appendChild(td);
         contentTableBody.appendChild(emptyRow);
-        renderContentPagination(totalPages);
+        renderContentPagination(totalPages, hasContents);
+        syncContentSortIndicators();
         return;
     }
 
     const startIndex = (state.contentPage - 1) * CONTENT_PAGE_SIZE;
     const endIndex = startIndex + CONTENT_PAGE_SIZE;
-    const pageRecords = state.contents.slice(startIndex, endIndex);
+    const pageRecords = sortedRecords.slice(startIndex, endIndex);
 
     pageRecords.forEach((record, index) => {
         const participantName = getParticipantName(record.participantUid);
@@ -109,14 +188,14 @@ export function renderContentTable() {
         contentTableBody.appendChild(tr);
     });
 
-    renderContentPagination(totalPages);
+    renderContentPagination(totalPages, hasContents);
+    syncContentSortIndicators();
     resetContentScroll();
 }
 
-function renderContentPagination(totalPages) {
+function renderContentPagination(totalPages, hasContents) {
     if (!contentPrevPageBtn || !contentNextPageBtn || !contentPageNumbers) return;
 
-    const hasContents = Boolean(state.contents.length);
     const safeTotalPages = hasContents ? Math.max(totalPages, 1) : 0;
 
     contentPageNumbers.innerHTML = '';
@@ -201,10 +280,66 @@ export function wireContentEvents(onRefresh) {
         state.contentPage += 1;
         renderContentTable();
     });
+
+    setupContentSorting();
 }
 
 function resetContentScroll() {
     if (contentTableScroll) {
         contentTableScroll.scrollTop = 0;
     }
+}
+
+function setupContentSorting() {
+    if (!contentSortButtons?.length) return;
+
+    contentSortButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const sortKey = button.dataset.sortKey;
+            if (!sortKey) return;
+            handleContentSortChange(sortKey);
+        });
+    });
+
+    syncContentSortIndicators();
+}
+
+function handleContentSortChange(sortKey) {
+    const isSameKey = state.contentSortKey === sortKey;
+    const defaultDirection = DEFAULT_SORT_DIRECTION[sortKey] || 'asc';
+    const nextDirection = isSameKey
+        ? state.contentSortDirection === 'asc'
+            ? 'desc'
+            : 'asc'
+        : defaultDirection;
+
+    state.contentSortKey = sortKey;
+    state.contentSortDirection = nextDirection;
+    state.contentPage = 1;
+    renderContentTable();
+}
+
+function syncContentSortIndicators() {
+    if (!contentSortButtons?.length) return;
+
+    contentSortButtons.forEach((button) => {
+        const sortKey = button.dataset.sortKey;
+        const icon = button.querySelector('.sort-icon');
+        const isActive = sortKey === state.contentSortKey;
+
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+
+        if (!icon) return;
+
+        if (!isActive) {
+            icon.textContent = '↕';
+            icon.setAttribute('aria-label', '정렬');
+            return;
+        }
+
+        const isAsc = state.contentSortDirection === 'asc';
+        icon.textContent = isAsc ? '▲' : '▼';
+        icon.setAttribute('aria-label', isAsc ? '오름차순' : '내림차순');
+    });
 }

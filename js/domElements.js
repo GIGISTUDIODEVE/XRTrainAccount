@@ -88,6 +88,7 @@ export const missionAnswersList = document.getElementById('missionAnswersList');
 export const missionList = document.getElementById('missionList');
 export const contentTableBody = document.getElementById('contentTableBody');
 export const contentTableScroll = document.getElementById('contentTableScroll');
+export const contentSortButtons = document.querySelectorAll('.content-sort-button');
 export const refreshContentsBtn = document.getElementById('refreshContentsBtn');
 export const contentPrevPageBtn = document.getElementById('contentPrevPage');
 export const contentNextPageBtn = document.getElementById('contentNextPage');

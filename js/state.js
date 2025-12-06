@@ -5,6 +5,8 @@ export const state = {
     participants: [],
     contents: [],
     contentPage: 1,
+    contentSortKey: 'participatedAt',
+    contentSortDirection: 'desc',
     participantSearchQuery: '',
     scenarios: [],
     scenarioMissions: [],

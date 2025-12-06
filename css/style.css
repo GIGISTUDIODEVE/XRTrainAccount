@@ -807,6 +807,39 @@ body {
     font-weight: 700;
 }
 
+.participant-table .sort-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.2s ease;
+}
+
+.participant-table .sort-button:hover,
+.participant-table .sort-button.active {
+    color: var(--text-primary);
+}
+
+.participant-table .sort-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 12px;
+    height: 12px;
+    font-size: 10px;
+    color: var(--text-secondary);
+}
+
+.participant-table .sort-button.active .sort-icon {
+    color: var(--primary-color);
+}
+
 .participant-table tr:last-child td {
     border-bottom: none;
 }

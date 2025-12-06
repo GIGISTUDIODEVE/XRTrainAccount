@@ -394,12 +394,37 @@
                                     <table class="participant-table">
                                         <thead>
                                             <tr>
-                                                <th>#</th>
-                                                <th>참가자 이름</th>
-                                                <th>참가 일시</th>
-                                                <th>시나리오 이름</th>
-                                                <th>시나리오 난이도</th>
-                                                <th>시나리오 총 플레이 시간</th>
+                                            <th>#</th>
+                                            <th>
+                                                <button class="sort-button content-sort-button" type="button" data-sort-key="participantName">
+                                                    <span>참가자 이름</span>
+                                                    <span class="sort-icon" aria-hidden="true">↕</span>
+                                                </button>
+                                            </th>
+                                            <th>
+                                                <button class="sort-button content-sort-button" type="button" data-sort-key="participatedAt">
+                                                    <span>참가 일시</span>
+                                                    <span class="sort-icon" aria-hidden="true">↕</span>
+                                                </button>
+                                            </th>
+                                            <th>
+                                                <button class="sort-button content-sort-button" type="button" data-sort-key="scenarioTitle">
+                                                    <span>시나리오 이름</span>
+                                                    <span class="sort-icon" aria-hidden="true">↕</span>
+                                                </button>
+                                            </th>
+                                            <th>
+                                                <button class="sort-button content-sort-button" type="button" data-sort-key="difficulty">
+                                                    <span>시나리오 난이도</span>
+                                                    <span class="sort-icon" aria-hidden="true">↕</span>
+                                                </button>
+                                            </th>
+                                            <th>
+                                                <button class="sort-button content-sort-button" type="button" data-sort-key="totalPlayTime">
+                                                    <span>시나리오 총 플레이 시간</span>
+                                                    <span class="sort-icon" aria-hidden="true">↕</span>
+                                                </button>
+                                            </th>
                                             </tr>
                                         </thead>
                                         <tbody id="contentTableBody">
