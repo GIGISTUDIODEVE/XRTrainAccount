@@ -24,7 +24,7 @@ function getScenarioMeta(scenarioUid) {
     };
 }
 
-function normalizeContentRecord(data, id) {
+export function normalizeContentRecord(data, id) {
     return {
         id,
         adminId: data.adminId || '',
