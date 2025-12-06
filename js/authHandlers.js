@@ -284,6 +284,7 @@ async function handleLogout() {
         state.participants = [];
         state.participantConditionList = [];
         state.contents = [];
+        state.contentSearchQuery = '';
         showToast('로그아웃되었습니다.', 'success');
         setTimeout(() => {
             showAuth();

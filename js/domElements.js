@@ -90,6 +90,7 @@ export const contentTableBody = document.getElementById('contentTableBody');
 export const contentTableScroll = document.getElementById('contentTableScroll');
 export const contentSortButtons = document.querySelectorAll('.content-sort-button');
 export const refreshContentsBtn = document.getElementById('refreshContentsBtn');
+export const contentSearchInput = document.getElementById('contentSearchInput');
 export const contentPrevPageBtn = document.getElementById('contentPrevPage');
 export const contentNextPageBtn = document.getElementById('contentNextPage');
 export const contentPageNumbers = document.getElementById('contentPageNumbers');

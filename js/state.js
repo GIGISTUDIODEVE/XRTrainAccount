@@ -7,6 +7,7 @@ export const state = {
     contentPage: 1,
     contentSortKey: 'participatedAt',
     contentSortDirection: 'desc',
+    contentSearchQuery: '',
     participantSearchQuery: '',
     scenarios: [],
     scenarioMissions: [],

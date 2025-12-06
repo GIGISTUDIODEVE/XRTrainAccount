@@ -4,6 +4,7 @@ import {
     contentNextPageBtn,
     contentPageNumbers,
     contentPrevPageBtn,
+    contentSearchInput,
     contentSortButtons,
     contentTableBody,
     contentTableScroll,
@@ -67,7 +68,7 @@ export async function loadContents() {
         const contentsQuery = query(collection(db, 'contents'), where('adminId', '==', state.currentUser.uid));
         const snapshot = await getDocs(contentsQuery);
         state.contents = snapshot.docs.map((docSnap) => normalizeContentRecord(docSnap.data(), docSnap.id));
-        updateContentPageAfterLoad();
+        updateContentPageAfterLoad(state.contents.length);
     } catch (error) {
         if (!isFirestorePermissionError(error)) {
             console.error('Contents load error:', error);
@@ -76,13 +77,13 @@ export async function loadContents() {
     }
 }
 
-function updateContentPageAfterLoad() {
-    if (!state.contents.length) {
+function updateContentPageAfterLoad(totalCount = state.contents.length) {
+    if (!totalCount) {
         state.contentPage = 1;
         return;
     }
 
-    const totalPages = Math.max(1, Math.ceil(state.contents.length / CONTENT_PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(totalCount / CONTENT_PAGE_SIZE));
     const safeCurrent = Math.min(Math.max(state.contentPage, 1), totalPages);
     state.contentPage = safeCurrent;
 }
@@ -130,26 +131,40 @@ function compareValues(a, b, direction) {
     return 0;
 }
 
-function getSortedContents() {
+function getFilteredContents() {
+    const query = (state.contentSearchQuery || '').trim().toLowerCase();
+    if (!query) return [...state.contents];
+
+    return state.contents.filter((record) => {
+        const participantName = getParticipantName(record.participantUid).toLowerCase();
+        return participantName.includes(query);
+    });
+}
+
+function getSortedContents(records = getFilteredContents()) {
     const sortKey = state.contentSortKey || 'participatedAt';
     const sortDirection = state.contentSortDirection || DEFAULT_SORT_DIRECTION[sortKey] || 'desc';
-    const records = [...state.contents];
+    const sortableRecords = [...records];
 
-    records.sort((a, b) => {
+    sortableRecords.sort((a, b) => {
         const aValue = getSortValue(a, sortKey);
         const bValue = getSortValue(b, sortKey);
         return compareValues(aValue, bValue, sortDirection);
     });
 
-    return records;
+    return sortableRecords;
 }
 
 export function renderContentTable() {
     if (!contentTableBody) return;
-    updateContentPageAfterLoad();
+    if (contentSearchInput) {
+        contentSearchInput.value = state.contentSearchQuery;
+    }
     contentTableBody.innerHTML = '';
 
-    const sortedRecords = getSortedContents();
+    const filteredRecords = getFilteredContents();
+    updateContentPageAfterLoad(filteredRecords.length);
+    const sortedRecords = getSortedContents(filteredRecords);
     const totalPages = Math.ceil(sortedRecords.length / CONTENT_PAGE_SIZE);
     const hasContents = Boolean(sortedRecords.length);
 
@@ -158,7 +173,10 @@ export function renderContentTable() {
         emptyRow.className = 'empty-row';
         const td = document.createElement('td');
         td.colSpan = 6;
-        td.textContent = '콘텐츠 기록이 없습니다. 시나리오 진행 후 데이터가 저장되면 이곳에서 확인할 수 있습니다.';
+        const hasSearchQuery = Boolean((state.contentSearchQuery || '').trim());
+        td.textContent = hasSearchQuery
+            ? '조건에 맞는 콘텐츠 기록이 없습니다. 참가자 이름을 확인해주세요.'
+            : '콘텐츠 기록이 없습니다. 시나리오 진행 후 데이터가 저장되면 이곳에서 확인할 수 있습니다.';
         emptyRow.appendChild(td);
         contentTableBody.appendChild(emptyRow);
         renderContentPagination(totalPages, hasContents);
@@ -275,9 +293,15 @@ export function wireContentEvents(onRefresh) {
     });
 
     contentNextPageBtn?.addEventListener('click', () => {
-        const totalPages = Math.ceil(state.contents.length / CONTENT_PAGE_SIZE);
+        const totalPages = Math.max(1, Math.ceil(getFilteredContents().length / CONTENT_PAGE_SIZE));
         if (state.contentPage >= totalPages) return;
         state.contentPage += 1;
+        renderContentTable();
+    });
+
+    contentSearchInput?.addEventListener('input', (event) => {
+        state.contentSearchQuery = event.target.value || '';
+        state.contentPage = 1;
         renderContentTable();
     });
 
