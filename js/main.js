@@ -9,16 +9,17 @@ import { loadScenarios, renderScenarioTable, wireScenarioEvents } from './scenar
 import { loadContents, renderContentTable, wireContentEvents } from './contents.js';
 import { setDashboardTab, showDashboard, updateDashboard, showAuth } from './navigation.js';
 import { state } from './state.js';
-import { refreshTestPage, wireTestPageEvents } from './testPage.js';
+import { loadTestRecords, refreshTestPage, wireTestPageEvents } from './testPage.js';
 
 window.addEventListener('DOMContentLoaded', () => {
     handleGoogleRedirectResult();
     setupEventListeners();
-    initAuthListeners(() => {
+    initAuthListeners(async () => {
         if (state.currentUser) {
             renderParticipantTable();
             renderScenarioTable();
             renderContentTable();
+            await loadTestRecords();
             refreshTestPage();
             showDashboard();
         } else {

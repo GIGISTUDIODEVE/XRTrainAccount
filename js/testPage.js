@@ -15,10 +15,17 @@ import {
     formatDateTimeLocal,
     formatDifficulty,
     formatDurationSeconds,
+    getFirestoreErrorMessage,
+    isFirestorePermissionError,
     showToast
 } from './utils.js';
+import { addDoc, collection, getDocs, query, serverTimestamp, where } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+import { db } from './firebaseConfig.js';
 
 const DEFAULT_TOTAL_PLAY_TIME = 300;
+const TEST_RECORD_COLLECTION = 'testRecords';
+
+let isSavingTestRecord = false;
 
 function buildOption(value, label) {
     const option = document.createElement('option');
@@ -33,6 +40,18 @@ function getScenarioById(id) {
 
 function getParticipantById(id) {
     return state.participants.find((item) => item.id === id || item.uid === id);
+}
+
+function toDateValue(value) {
+    return value?.toDate ? value.toDate() : value;
+}
+
+function sortRecords(records) {
+    return [...records].sort((a, b) => {
+        const aTime = a.participatedAt?.getTime?.() || 0;
+        const bTime = b.participatedAt?.getTime?.() || 0;
+        return bTime - aTime;
+    });
 }
 
 function ensureDefaultDateTime() {
@@ -136,6 +155,35 @@ export function renderTestOptions() {
     renderMissionInputs(testScenarioSelect?.value);
 }
 
+function mapTestRecord(docSnap) {
+    const data = docSnap.data();
+    return {
+        id: docSnap.id,
+        ...data,
+        missionStatuses: Array.isArray(data.missionStatuses) ? data.missionStatuses : [],
+        missionDurations: Array.isArray(data.missionDurations) ? data.missionDurations : [],
+        participatedAt: toDateValue(data.participatedAt),
+        createdAt: toDateValue(data.createdAt)
+    };
+}
+
+export async function loadTestRecords() {
+    if (!state.currentUser) return;
+
+    try {
+        const testQuery = query(collection(db, TEST_RECORD_COLLECTION), where('adminId', '==', state.currentUser.uid));
+        const snapshot = await getDocs(testQuery);
+        const records = snapshot.docs.map(mapTestRecord);
+        state.testRecords = sortRecords(records);
+        renderTestRecordTable();
+    } catch (error) {
+        if (!isFirestorePermissionError(error)) {
+            console.error('Test records load error:', error);
+            showToast(getFirestoreErrorMessage(error), 'error');
+        }
+    }
+}
+
 export function renderTestRecordTable() {
     if (!testRecordTableBody) return;
 
@@ -203,6 +251,22 @@ function validateTestForm() {
     return { participantId, scenarioId, participatedAt: new Date(participatedAt), totalPlayTime, retryCount };
 }
 
+function setSavingState(isSaving) {
+    isSavingTestRecord = isSaving;
+    if (testAddRecordBtn) {
+        testAddRecordBtn.disabled = isSaving;
+        testAddRecordBtn.classList.toggle('loading', isSaving);
+    }
+}
+
+async function persistTestRecord(record) {
+    const { id: _recordId, ...cleanRecord } = record;
+    const payload = { ...cleanRecord, adminId: state.currentUser.uid, createdAt: serverTimestamp() };
+
+    const docRef = await addDoc(collection(db, TEST_RECORD_COLLECTION), payload);
+    return { ...cleanRecord, id: docRef.id };
+}
+
 function resetTestForm() {
     if (testTotalPlayTimeInput) {
         testTotalPlayTimeInput.value = DEFAULT_TOTAL_PLAY_TIME.toString();
@@ -226,8 +290,15 @@ export function wireTestPageEvents(onRecordAdded) {
         renderMissionInputs(scenarioId);
     });
 
-    testAddRecordBtn?.addEventListener('click', (event) => {
+    testAddRecordBtn?.addEventListener('click', async (event) => {
         event.preventDefault();
+
+        if (!state.currentUser) {
+            showToast('로그인 후 이용해주세요.', 'error');
+            return;
+        }
+
+        if (isSavingTestRecord) return;
 
         const result = validateTestForm();
         if (!result) return;
@@ -235,7 +306,6 @@ export function wireTestPageEvents(onRecordAdded) {
         const { statuses, missionDurations } = readMissionStatuses();
 
         const record = {
-            id: `test-${Date.now()}`,
             participantId: result.participantId,
             scenarioId: result.scenarioId,
             participatedAt: result.participatedAt,
@@ -246,11 +316,20 @@ export function wireTestPageEvents(onRecordAdded) {
             notes: testNotesInput?.value?.trim() || ''
         };
 
-        state.testRecords = [record, ...state.testRecords];
-        renderTestRecordTable();
-        showToast('테스트용 콘텐츠 완료 기록이 추가되었습니다.', 'success');
-        resetTestForm();
-        onRecordAdded?.(record);
+        try {
+            setSavingState(true);
+            const savedRecord = await persistTestRecord(record);
+            state.testRecords = sortRecords([savedRecord, ...state.testRecords]);
+            renderTestRecordTable();
+            showToast('테스트용 콘텐츠 완료 기록이 추가되었습니다.', 'success');
+            resetTestForm();
+            onRecordAdded?.(savedRecord);
+        } catch (error) {
+            console.error('Test record save error:', error);
+            showToast(getFirestoreErrorMessage(error), 'error');
+        } finally {
+            setSavingState(false);
+        }
     });
 }
 
