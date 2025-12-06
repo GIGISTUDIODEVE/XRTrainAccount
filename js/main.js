@@ -9,15 +9,18 @@ import { loadScenarios, renderScenarioTable, wireScenarioEvents } from './scenar
 import { loadContents, renderContentTable, wireContentEvents } from './contents.js';
 import { setDashboardTab, showDashboard, updateDashboard, showAuth } from './navigation.js';
 import { state } from './state.js';
+import { loadTestRecords, refreshTestPage, wireTestPageEvents } from './testPage.js';
 
 window.addEventListener('DOMContentLoaded', () => {
     handleGoogleRedirectResult();
     setupEventListeners();
-    initAuthListeners(() => {
+    initAuthListeners(async () => {
         if (state.currentUser) {
             renderParticipantTable();
             renderScenarioTable();
             renderContentTable();
+            await loadTestRecords();
+            refreshTestPage();
             showDashboard();
         } else {
             showAuth();
@@ -31,11 +34,13 @@ function setupEventListeners() {
     wireParticipantEvents(async () => {
         await loadParticipants();
         updateDashboard(state.currentUser);
+        refreshTestPage();
     });
 
     wireScenarioEvents(async () => {
         await loadScenarios();
         renderScenarioTable();
+        refreshTestPage();
     });
 
     wireContentEvents(async () => {
@@ -43,8 +48,11 @@ function setupEventListeners() {
         renderContentTable();
     });
 
+    wireTestPageEvents();
+
     document.getElementById('tabAdmin')?.addEventListener('click', () => setDashboardTab('admin'));
     document.getElementById('tabParticipants')?.addEventListener('click', () => setDashboardTab('participants'));
     document.getElementById('tabScenarios')?.addEventListener('click', () => setDashboardTab('scenarios'));
     document.getElementById('tabContents')?.addEventListener('click', () => setDashboardTab('contents'));
+    document.getElementById('tabTest')?.addEventListener('click', () => setDashboardTab('test'));
 }

@@ -45,7 +45,7 @@ import {
 } from './profile.js';
 import { loadParticipants } from './participants.js';
 import { loadScenarios } from './scenarios.js';
-import { loadContents } from './contents.js';
+import { loadContents, renderContentTable } from './contents.js';
 import { setActivePage, showAuth, showDashboard } from './navigation.js';
 
 export function wireAuthEvents() {
@@ -95,12 +95,20 @@ export function initAuthListeners(onReady) {
             }
 
             showDashboard();
+            renderContentTable();
         } else {
             state.currentUser = null;
+            state.testRecords = [];
             showAuth();
         }
 
-        onReady?.();
+        if (onReady) {
+            try {
+                await onReady();
+            } catch (error) {
+                console.error('Auth ready callback error:', error);
+            }
+        }
     });
 }
 
@@ -276,6 +284,7 @@ async function handleLogout() {
         state.participants = [];
         state.participantConditionList = [];
         state.contents = [];
+        state.contentSearchQuery = '';
         showToast('로그아웃되었습니다.', 'success');
         setTimeout(() => {
             showAuth();
@@ -302,6 +311,7 @@ async function finalizeLoginFlow(user, message) {
         showToast(getFirestoreErrorMessage(error), 'warning');
     }
 
+    renderContentTable();
     showToast(message, 'success');
     showDashboard();
 }
