@@ -1,6 +1,6 @@
 import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 import { db } from './firebaseConfig.js';
-import { contentNextPageBtn, contentPageInfo, contentPrevPageBtn, contentTableBody, refreshContentsBtn } from './domElements.js';
+import { contentNextPageBtn, contentPageInfo, contentPrevPageBtn, contentTableBody, contentTableScroll, refreshContentsBtn } from './domElements.js';
 import { state } from './state.js';
 import {
     formatDateTime,
@@ -63,13 +63,13 @@ function updateContentPageAfterLoad() {
     }
 
     const totalPages = Math.max(1, Math.ceil(state.contents.length / CONTENT_PAGE_SIZE));
-    if (state.contentPage > totalPages) {
-        state.contentPage = totalPages;
-    }
+    const safeCurrent = Math.min(Math.max(state.contentPage, 1), totalPages);
+    state.contentPage = safeCurrent;
 }
 
 export function renderContentTable() {
     if (!contentTableBody) return;
+    updateContentPageAfterLoad();
     contentTableBody.innerHTML = '';
 
     const totalPages = Math.ceil(state.contents.length / CONTENT_PAGE_SIZE);
@@ -110,6 +110,7 @@ export function renderContentTable() {
     });
 
     renderContentPagination(totalPages);
+    resetContentScroll();
 }
 
 function renderContentPagination(totalPages) {
@@ -143,4 +144,10 @@ export function wireContentEvents(onRefresh) {
         state.contentPage += 1;
         renderContentTable();
     });
+}
+
+function resetContentScroll() {
+    if (contentTableScroll) {
+        contentTableScroll.scrollTop = 0;
+    }
 }

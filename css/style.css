@@ -708,6 +708,11 @@ body {
 }
 
 .content-table-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+.content-table-scroll {
     max-height: 60vh;
     overflow-y: auto;
 }
