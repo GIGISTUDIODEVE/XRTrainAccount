@@ -639,12 +639,66 @@ body {
     padding: 20px 20px 28px;
 }
 
+.contents-card {
+    padding: 20px 20px 28px;
+}
+
 .participants-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
     margin-bottom: 12px;
+}
+
+.content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.participant-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.content-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.search-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--bg-primary);
+    min-width: 220px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-input:focus-within {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.search-input i {
+    color: var(--text-muted);
+}
+
+.search-input input {
+    border: none;
+    outline: none;
+    width: 100%;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 14px;
 }
 
 .table-wrapper {
@@ -720,6 +774,13 @@ body {
 .welcome-header {
     display: flex;
     align-items: center;
+    gap: 16px;
+}
+
+.welcome-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 16px;
     margin-bottom: 16px;
 }
@@ -821,6 +882,184 @@ body {
     font-size: 20px;
 }
 
+.mission-builder {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.mission-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.mission-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+}
+
+.mission-items {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.mission-items-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.mission-items-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.mission-item-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mission-item-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 8px;
+}
+
+.mission-item-row input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #f9fafb;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.mission-item-row input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    background: #fff;
+}
+
+.mission-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.mission-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mission-card.editing {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.mission-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.mission-card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.mission-title {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.mission-meta {
+    display: flex;
+    gap: 12px;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.mission-meta i {
+    margin-right: 6px;
+    color: #2563eb;
+}
+
+.mission-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+    padding-top: 4px;
+}
+
+.mission-list-block {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mission-list-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.mission-list-title i {
+    color: #2563eb;
+}
+
+.mission-text-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: #374151;
+}
+
+.mission-text-list li {
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.mission-empty {
+    color: #9ca3af;
+    font-size: 14px;
+    margin: 0;
+}
+
 /* Modal */
 .modal-overlay {
     position: fixed;
@@ -838,6 +1077,9 @@ body {
     border-radius: 16px;
     box-shadow: var(--shadow-xl);
     padding: 24px;
+    max-height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
     animation: slideIn 0.35s ease-out;
 }
 
@@ -868,6 +1110,12 @@ body {
 
 .modal-form {
     margin-top: 8px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow-y: auto;
+    padding-right: 4px;
 }
 
 .modal-actions {
