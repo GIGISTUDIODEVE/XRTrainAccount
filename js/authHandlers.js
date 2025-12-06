@@ -97,10 +97,17 @@ export function initAuthListeners(onReady) {
             showDashboard();
         } else {
             state.currentUser = null;
+            state.testRecords = [];
             showAuth();
         }
 
-        onReady?.();
+        if (onReady) {
+            try {
+                await onReady();
+            } catch (error) {
+                console.error('Auth ready callback error:', error);
+            }
+        }
     });
 }
 
