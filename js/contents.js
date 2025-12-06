@@ -155,6 +155,9 @@ function renderContentPagination(totalPages) {
 
 function buildPageList(totalPages, currentPage) {
     if (totalPages <= 1) return totalPages === 1 ? [1] : [];
+    if (totalPages <= 3) {
+        return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
     if (totalPages <= 7) {
         return Array.from({ length: totalPages }, (_, index) => index + 1);
     }
