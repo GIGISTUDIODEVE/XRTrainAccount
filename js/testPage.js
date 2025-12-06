@@ -23,7 +23,7 @@ import { addDoc, collection, getDocs, query, serverTimestamp, where } from "http
 import { db } from './firebaseConfig.js';
 
 const DEFAULT_TOTAL_PLAY_TIME = 300;
-const TEST_RECORD_COLLECTION = 'testRecords';
+const TEST_RECORD_COLLECTION = 'Records';
 
 let isSavingTestRecord = false;
 
