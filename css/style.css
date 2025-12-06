@@ -719,12 +719,52 @@ body {
 
 .content-pagination {
     display: flex;
-    gap: 12px;
+    gap: 16px;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: center;
+    flex-wrap: wrap;
     padding: 12px 16px;
     border-top: 1px solid var(--border-color);
     background: var(--bg-primary);
+}
+
+.content-pagination .page-numbers {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+.content-pagination .page-number {
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-weight: 700;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.content-pagination .page-number.active {
+    background: var(--primary-color);
+    color: #fff;
+}
+
+.content-pagination .page-number:hover:not(.active) {
+    background: var(--bg-secondary);
+}
+
+.content-pagination .page-ellipsis,
+.content-pagination .page-separator {
+    color: var(--text-secondary);
+    font-weight: 700;
+}
+
+.content-pagination .chevron {
+    font-weight: 900;
+    font-size: 14px;
 }
 
 .content-pagination .btn-secondary {

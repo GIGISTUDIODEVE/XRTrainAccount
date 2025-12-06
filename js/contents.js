@@ -1,6 +1,6 @@
 import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 import { db } from './firebaseConfig.js';
-import { contentNextPageBtn, contentPageInfo, contentPrevPageBtn, contentTableBody, contentTableScroll, refreshContentsBtn } from './domElements.js';
+import { contentNextPageBtn, contentPageNumbers, contentPrevPageBtn, contentTableBody, contentTableScroll, refreshContentsBtn } from './domElements.js';
 import { state } from './state.js';
 import {
     formatDateTime,
@@ -114,15 +114,69 @@ export function renderContentTable() {
 }
 
 function renderContentPagination(totalPages) {
-    if (!contentPrevPageBtn || !contentNextPageBtn || !contentPageInfo) return;
+    if (!contentPrevPageBtn || !contentNextPageBtn || !contentPageNumbers) return;
 
     const hasContents = Boolean(state.contents.length);
-    const safeTotalPages = totalPages || 0;
-    const currentPage = hasContents ? state.contentPage : 0;
+    const safeTotalPages = hasContents ? Math.max(totalPages, 1) : 0;
 
-    contentPageInfo.textContent = `${currentPage} / ${safeTotalPages}`;
+    contentPageNumbers.innerHTML = '';
+    const pages = buildPageList(safeTotalPages, hasContents ? state.contentPage : 0);
+    pages.forEach((page, index) => {
+        if (page === 'ellipsis') {
+            const ellipsis = document.createElement('span');
+            ellipsis.className = 'page-ellipsis';
+            ellipsis.textContent = '...';
+            contentPageNumbers.appendChild(ellipsis);
+        } else {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `page-number${page === state.contentPage ? ' active' : ''}`;
+            button.textContent = page;
+            button.addEventListener('click', () => {
+                if (state.contentPage === page) return;
+                state.contentPage = page;
+                renderContentTable();
+            });
+            contentPageNumbers.appendChild(button);
+        }
+
+        const needsSeparator = index < pages.length - 1;
+        if (needsSeparator) {
+            const separator = document.createElement('span');
+            separator.className = 'page-separator';
+            separator.textContent = '.';
+            contentPageNumbers.appendChild(separator);
+        }
+    });
+
     contentPrevPageBtn.disabled = !hasContents || state.contentPage <= 1;
     contentNextPageBtn.disabled = !hasContents || state.contentPage >= safeTotalPages;
+}
+
+function buildPageList(totalPages, currentPage) {
+    if (totalPages <= 1) return totalPages === 1 ? [1] : [];
+    if (totalPages <= 7) {
+        return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    const pages = [1];
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+
+    if (start > 2) {
+        pages.push('ellipsis');
+    }
+
+    for (let page = start; page <= end; page += 1) {
+        pages.push(page);
+    }
+
+    if (end < totalPages - 1) {
+        pages.push('ellipsis');
+    }
+
+    pages.push(totalPages);
+    return pages;
 }
 
 export function wireContentEvents(onRefresh) {
