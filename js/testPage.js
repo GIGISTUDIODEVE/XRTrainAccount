@@ -21,9 +21,10 @@ import {
 } from './utils.js';
 import { addDoc, collection, getDocs, query, serverTimestamp, where } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 import { db } from './firebaseConfig.js';
+import { normalizeContentRecord } from './contents.js';
 
 const DEFAULT_TOTAL_PLAY_TIME = 300;
-const TEST_RECORD_COLLECTION = 'Records';
+const CONTENT_COLLECTION = 'contents';
 
 let isSavingTestRecord = false;
 
@@ -40,10 +41,6 @@ function getScenarioById(id) {
 
 function getParticipantById(id) {
     return state.participants.find((item) => item.id === id || item.uid === id);
-}
-
-function toDateValue(value) {
-    return value?.toDate ? value.toDate() : value;
 }
 
 function sortRecords(records) {
@@ -155,25 +152,14 @@ export function renderTestOptions() {
     renderMissionInputs(testScenarioSelect?.value);
 }
 
-function mapTestRecord(docSnap) {
-    const data = docSnap.data();
-    return {
-        id: docSnap.id,
-        ...data,
-        missionStatuses: Array.isArray(data.missionStatuses) ? data.missionStatuses : [],
-        missionDurations: Array.isArray(data.missionDurations) ? data.missionDurations : [],
-        participatedAt: toDateValue(data.participatedAt),
-        createdAt: toDateValue(data.createdAt)
-    };
-}
-
 export async function loadTestRecords() {
     if (!state.currentUser) return;
 
     try {
-        const testQuery = query(collection(db, TEST_RECORD_COLLECTION), where('adminId', '==', state.currentUser.uid));
+        const testQuery = query(collection(db, CONTENT_COLLECTION), where('adminId', '==', state.currentUser.uid));
         const snapshot = await getDocs(testQuery);
-        const records = snapshot.docs.map(mapTestRecord);
+        const records = snapshot.docs.map((docSnap) => normalizeContentRecord(docSnap.data(), docSnap.id));
+        state.contents = records;
         state.testRecords = sortRecords(records);
         renderTestRecordTable();
     } catch (error) {
@@ -201,8 +187,8 @@ export function renderTestRecordTable() {
     }
 
     state.testRecords.forEach((record) => {
-        const participant = getParticipantById(record.participantId);
-        const scenario = getScenarioById(record.scenarioId);
+        const participant = getParticipantById(record.participantUid);
+        const scenario = getScenarioById(record.scenarioUid);
         const missionSummary = record.missionStatuses.length
             ? record.missionStatuses.map((item) => `${item.name}: ${item.status}`).join(', ')
             : '미션 없음';
@@ -222,18 +208,18 @@ export function renderTestRecordTable() {
 }
 
 function validateTestForm() {
-    const participantId = testParticipantSelect?.value || '';
-    const scenarioId = testScenarioSelect?.value || '';
+    const participantUid = testParticipantSelect?.value || '';
+    const scenarioUid = testScenarioSelect?.value || '';
     const participatedAt = testParticipatedAtInput?.value;
     const totalPlayTime = Number(testTotalPlayTimeInput?.value || DEFAULT_TOTAL_PLAY_TIME);
     const retryCount = Number(testRetryCountInput?.value || 0);
 
-    if (!participantId) {
+    if (!participantUid) {
         showToast('참가자를 선택해주세요.', 'error');
         return null;
     }
 
-    if (!scenarioId) {
+    if (!scenarioUid) {
         showToast('시나리오를 선택해주세요.', 'error');
         return null;
     }
@@ -248,7 +234,7 @@ function validateTestForm() {
         return null;
     }
 
-    return { participantId, scenarioId, participatedAt: new Date(participatedAt), totalPlayTime, retryCount };
+    return { participantUid, scenarioUid, participatedAt: new Date(participatedAt), totalPlayTime, retryCount };
 }
 
 function setSavingState(isSaving) {
@@ -263,8 +249,8 @@ async function persistTestRecord(record) {
     const { id: _recordId, ...cleanRecord } = record;
     const payload = { ...cleanRecord, adminId: state.currentUser.uid, createdAt: serverTimestamp() };
 
-    const docRef = await addDoc(collection(db, TEST_RECORD_COLLECTION), payload);
-    return { ...cleanRecord, id: docRef.id };
+    const docRef = await addDoc(collection(db, CONTENT_COLLECTION), payload);
+    return { ...cleanRecord, adminId: state.currentUser.uid, id: docRef.id };
 }
 
 function resetTestForm() {
@@ -306,8 +292,8 @@ export function wireTestPageEvents(onRecordAdded) {
         const { statuses, missionDurations } = readMissionStatuses();
 
         const record = {
-            participantId: result.participantId,
-            scenarioId: result.scenarioId,
+            participantUid: result.participantUid,
+            scenarioUid: result.scenarioUid,
             participatedAt: result.participatedAt,
             totalPlayTime: result.totalPlayTime,
             retryCount: result.retryCount,
@@ -320,6 +306,7 @@ export function wireTestPageEvents(onRecordAdded) {
             setSavingState(true);
             const savedRecord = await persistTestRecord(record);
             state.testRecords = sortRecords([savedRecord, ...state.testRecords]);
+            state.contents = sortRecords([savedRecord, ...state.contents]);
             renderTestRecordTable();
             showToast('테스트용 콘텐츠 완료 기록이 추가되었습니다.', 'success');
             resetTestForm();
