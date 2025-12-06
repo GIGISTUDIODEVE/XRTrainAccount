@@ -707,6 +707,11 @@ body {
     border-radius: 12px;
 }
 
+.content-table-wrapper {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
 .participant-table {
     width: 100%;
     border-collapse: collapse;
