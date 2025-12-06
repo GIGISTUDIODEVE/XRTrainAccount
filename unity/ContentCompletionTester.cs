@@ -16,6 +16,9 @@ public class ContentCompletionTester : MonoBehaviour
     [Tooltip("콘텐츠 완료 API의 전체 URL (예: https://api.example.com/contents/complete)")]
     [SerializeField] private string apiUrl = "https://api.example.com/contents/complete";
 
+    [Tooltip("HTTP 메서드 (POST/PUT/PATCH). 대부분 POST를 사용합니다.")]
+    [SerializeField] private HttpVerb httpMethod = HttpVerb.POST;
+
     [Tooltip("필요 시 Bearer 토큰 등 인증 정보를 입력")]
     [SerializeField] private string authorizationToken = string.Empty;
 
@@ -65,27 +68,46 @@ public class ContentCompletionTester : MonoBehaviour
         var json = JsonUtility.ToJson(payload);
         var bodyRaw = Encoding.UTF8.GetBytes(json);
 
-        using var request = new UnityWebRequest(apiUrl, UnityWebRequest.kHttpVerbPOST);
-        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+        var methodString = httpMethod.ToString();
+
+        using var request = new UnityWebRequest(apiUrl, methodString);
         request.downloadHandler = new DownloadHandlerBuffer();
-        request.SetRequestHeader("Content-Type", "application/json");
+
+        // GET/DELETE는 보통 본문을 허용하지 않으므로 POST/PUT/PATCH일 때만 업로드 핸들러 설정
+        if (httpMethod == HttpVerb.POST || httpMethod == HttpVerb.PUT || httpMethod == HttpVerb.PATCH)
+        {
+            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            request.SetRequestHeader("Content-Type", "application/json");
+        }
 
         if (!string.IsNullOrWhiteSpace(authorizationToken))
         {
             request.SetRequestHeader("Authorization", $"Bearer {authorizationToken}");
         }
 
-        Debug.Log($"[ContentCompletionTester] POST {apiUrl}\n{json}");
+        Debug.Log($"[ContentCompletionTester] {methodString} {apiUrl}\n{json}");
 
         yield return request.SendWebRequest();
 
         if (request.result != UnityWebRequest.Result.Success)
         {
-            Debug.LogError($"API 호출 실패: {request.responseCode} {request.error}\n{request.downloadHandler.text}");
+            var hint = request.responseCode == 405
+                ? "(서버가 해당 메서드를 허용하지 않습니다. API가 POST/PUT/PATCH를 지원하는지 확인하거나 httpMethod를 올바르게 설정하세요.)"
+                : string.Empty;
+            Debug.LogError($"API 호출 실패: {request.responseCode} {request.error} {hint}\n{request.downloadHandler.text}");
             yield break;
         }
 
         Debug.Log($"API 호출 성공: {request.responseCode}\n응답: {request.downloadHandler.text}");
+    }
+
+    private enum HttpVerb
+    {
+        POST,
+        PUT,
+        PATCH,
+        GET,
+        DELETE
     }
 
     private ContentCompletionPayload BuildPayload()
