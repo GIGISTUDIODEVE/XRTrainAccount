@@ -8,9 +8,11 @@ import {
     tabParticipants,
     tabScenarios,
     tabContents,
+    tabTest,
     participantCountEl,
     scenarioView,
-    contentView
+    contentView,
+    testView
 } from './domElements.js';
 import { state } from './state.js';
 import { formatDate } from './utils.js';
@@ -33,7 +35,8 @@ export function setDashboardTab(tabKey) {
         admin: { tab: tabAdmin, view: adminView },
         participants: { tab: tabParticipants, view: participantView },
         scenarios: { tab: tabScenarios, view: scenarioView },
-        contents: { tab: tabContents, view: contentView }
+        contents: { tab: tabContents, view: contentView },
+        test: { tab: tabTest, view: testView }
     };
 
     Object.entries(tabMap).forEach(([key, { tab, view }]) => {
