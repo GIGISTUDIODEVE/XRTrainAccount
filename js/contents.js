@@ -10,6 +10,8 @@ import {
     contentSearchInput,
     contentScenarioFilterSelect,
     contentDifficultyFilterSelect,
+    contentInsightsBtn,
+    contentInsightsModal,
     contentSortButtons,
     contentTableBody,
     contentTableScroll,
@@ -25,7 +27,16 @@ import {
     contentStatsFailure,
     contentStatsRate,
     contentStatsMissionAverage,
-    contentStatsScenarioAverage
+    contentStatsScenarioAverage,
+    closeContentInsightsModalBtn,
+    dismissContentInsightsBtn,
+    contentInsightsChart,
+    contentInsightsMessage,
+    contentInsightsIntervalButtons,
+    contentInsightsTotal,
+    contentInsightsSuccess,
+    contentInsightsFailure,
+    contentInsightsRate
 } from './domElements.js';
 import { state } from './state.js';
 import {
@@ -209,6 +220,7 @@ export function renderContentTable() {
     const filteredRecords = getFilteredContents();
     const areFiltersActive = areAllContentFiltersActive();
     updateContentPageAfterLoad(filteredRecords.length);
+    updateContentInsightsButtonState(areFiltersActive, filteredRecords.length);
     const sortedRecords = getSortedContents(filteredRecords);
     const totalPages = Math.ceil(sortedRecords.length / CONTENT_PAGE_SIZE);
     const hasContents = Boolean(sortedRecords.length);
@@ -229,6 +241,7 @@ export function renderContentTable() {
         renderContentPagination(totalPages, hasContents);
         syncContentSortIndicators();
         renderContentStats(filteredRecords, areFiltersActive);
+        renderContentInsightsIfOpen(filteredRecords, areFiltersActive);
         return;
     }
 
@@ -266,6 +279,7 @@ export function renderContentTable() {
     renderContentPagination(totalPages, hasContents);
     syncContentSortIndicators();
     renderContentStats(filteredRecords, areFiltersActive);
+    renderContentInsightsIfOpen(filteredRecords, areFiltersActive);
     resetContentScroll();
 }
 
@@ -306,6 +320,15 @@ function renderContentPagination(totalPages, hasContents) {
 
     contentPrevPageBtn.disabled = !hasContents || state.contentPage <= 1;
     contentNextPageBtn.disabled = !hasContents || state.contentPage >= safeTotalPages;
+}
+
+function updateContentInsightsButtonState(filtersActive, recordCount) {
+    if (!contentInsightsBtn) return;
+    const enabled = filtersActive && recordCount > 0;
+    contentInsightsBtn.disabled = !enabled;
+    contentInsightsBtn.title = enabled
+        ? '필터 조건에 맞는 상세 통계를 확인합니다.'
+        : '참가자 검색, 시나리오, 난이도, 기간을 모두 설정하면 활성화됩니다.';
 }
 
 function buildPageList(totalPages, currentPage) {
@@ -386,6 +409,7 @@ export function wireContentEvents(onRefresh) {
 
     setupContentSorting();
     setupContentDetailModal();
+    setupContentInsights();
 }
 
 function handleContentDateChange(type, nextValue) {
@@ -612,6 +636,11 @@ function renderContentStats(records, filtersActive) {
         : '조건에 맞는 기록이 없어 요약을 계산할 수 없습니다.';
 }
 
+function renderContentInsightsIfOpen(records, filtersActive) {
+    if (!contentInsightsModal || contentInsightsModal.classList.contains('hidden')) return;
+    renderContentInsights(records, filtersActive);
+}
+
 function resetContentScroll() {
     if (contentTableScroll) {
         contentTableScroll.scrollTop = 0;
@@ -669,6 +698,17 @@ function syncContentSortIndicators() {
         const isAsc = state.contentSortDirection === 'asc';
         icon.textContent = isAsc ? '▲' : '▼';
         icon.setAttribute('aria-label', isAsc ? '오름차순' : '내림차순');
+    });
+}
+
+function syncContentInsightsIntervalButtons() {
+    if (!contentInsightsIntervalButtons?.length) return;
+    const current = state.contentInsightInterval || 'month';
+
+    contentInsightsIntervalButtons.forEach((button) => {
+        const isActive = button.dataset.interval === current;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
     });
 }
 
@@ -782,4 +822,289 @@ function getMissionDurationText(record, index) {
     const value = record.missionDurations?.[index];
     if (!Number.isFinite(value)) return '소요 시간 정보 없음';
     return `소요 시간 ${formatDurationSeconds(value)}`;
+}
+
+function setupContentInsights() {
+    contentInsightsBtn?.addEventListener('click', () => {
+        const records = getFilteredContents();
+        const filtersActive = areAllContentFiltersActive();
+        if (!filtersActive) {
+            showToast('참가자 검색, 시나리오, 난이도, 기간을 모두 설정해야 합니다.', 'warning');
+            return;
+        }
+
+        if (!records.length) {
+            showToast('조건에 맞는 콘텐츠 기록이 없습니다.', 'info');
+            return;
+        }
+
+        openContentInsightsModal(records, filtersActive);
+    });
+
+    contentInsightsIntervalButtons?.forEach((button) => {
+        button.addEventListener('click', () => {
+            const interval = button.dataset.interval;
+            if (!interval || state.contentInsightInterval === interval) return;
+
+            state.contentInsightInterval = interval;
+            syncContentInsightsIntervalButtons();
+
+            if (!contentInsightsModal || contentInsightsModal.classList.contains('hidden')) return;
+            const records = getFilteredContents();
+            const filtersActive = areAllContentFiltersActive();
+            if (!filtersActive || !records.length) return;
+            renderContentInsights(records, filtersActive);
+        });
+    });
+
+    closeContentInsightsModalBtn?.addEventListener('click', closeContentInsightsModal);
+    dismissContentInsightsBtn?.addEventListener('click', closeContentInsightsModal);
+    contentInsightsModal?.addEventListener('click', (event) => {
+        if (event.target === contentInsightsModal) {
+            closeContentInsightsModal();
+        }
+    });
+
+    syncContentInsightsIntervalButtons();
+}
+
+function openContentInsightsModal(records, filtersActive) {
+    if (!contentInsightsModal) return;
+    renderContentInsights(records, filtersActive);
+    contentInsightsModal.classList.remove('hidden');
+    contentInsightsModal.setAttribute('aria-hidden', 'false');
+}
+
+function closeContentInsightsModal() {
+    if (!contentInsightsModal) return;
+    contentInsightsModal.classList.add('hidden');
+    contentInsightsModal.setAttribute('aria-hidden', 'true');
+}
+
+function renderContentInsights(records, filtersActive) {
+    renderContentInsightsSummary(records, filtersActive);
+    renderContentInsightsChart(records, filtersActive);
+}
+
+function renderContentInsightsSummary(records, filtersActive) {
+    if (!contentInsightsMessage || !contentInsightsTotal || !contentInsightsSuccess || !contentInsightsFailure || !contentInsightsRate) {
+        return;
+    }
+
+    if (!filtersActive) {
+        contentInsightsMessage.textContent = '모든 필터를 설정하면 기간별 성과를 확인할 수 있습니다.';
+        contentInsightsTotal.textContent = '0';
+        contentInsightsSuccess.textContent = '0';
+        contentInsightsFailure.textContent = '0';
+        contentInsightsRate.textContent = '0%';
+        return;
+    }
+
+    const { total, success, failure, successRate } = calculateContentStats(records);
+    const hasRecords = total > 0;
+    contentInsightsMessage.textContent = hasRecords
+        ? '필터 조건에 맞는 기간별 성과입니다.'
+        : '조건에 맞는 기록이 없어 요약을 계산할 수 없습니다.';
+    contentInsightsTotal.textContent = total.toLocaleString('ko-KR');
+    contentInsightsSuccess.textContent = success.toLocaleString('ko-KR');
+    contentInsightsFailure.textContent = failure.toLocaleString('ko-KR');
+    contentInsightsRate.textContent = `${successRate.toFixed(1)}%`;
+}
+
+function renderContentInsightsChart(records, filtersActive) {
+    if (!contentInsightsChart) return;
+
+    if (!filtersActive) {
+        contentInsightsChart.innerHTML = '<div class="empty-helper">필터를 모두 설정하면 기간별 차트가 표시됩니다.</div>';
+        return;
+    }
+
+    if (!records.length) {
+        contentInsightsChart.innerHTML = '<div class="empty-helper">조건에 맞는 기록이 없어 그래프를 생성할 수 없습니다.</div>';
+        return;
+    }
+
+    const interval = state.contentInsightInterval || 'month';
+    const { series, missionNames } = buildInsightSeries(records, interval);
+    const hasSeries = series.length > 0;
+
+    if (!hasSeries) {
+        contentInsightsChart.innerHTML = '<div class="empty-helper">기간 정보를 계산할 수 없습니다.</div>';
+        return;
+    }
+
+    const hasMissionData = missionNames.length > 0 && series.some((item) => item.missionRates.some((mission) => mission.hasData));
+    contentInsightsChart.innerHTML = '';
+
+    series.forEach((period) => {
+        const periodBlock = document.createElement('div');
+        periodBlock.className = 'insight-period';
+
+        const header = document.createElement('div');
+        header.className = 'insight-period-header';
+        const periodLabel = document.createElement('div');
+        periodLabel.className = 'period-label';
+        periodLabel.textContent = period.label;
+        const periodMeta = document.createElement('div');
+        periodMeta.className = 'period-meta';
+        periodMeta.textContent = period.hasScenarioData ? `시나리오 성공률 ${period.scenarioRate.toFixed(1)}%` : '시나리오 데이터 없음';
+        header.appendChild(periodLabel);
+        header.appendChild(periodMeta);
+        periodBlock.appendChild(header);
+
+        const scenarioBar = createInsightBar('시나리오 성공률', period.scenarioRate, 'scenario', period.hasScenarioData);
+        periodBlock.appendChild(scenarioBar);
+
+        if (hasMissionData) {
+            const missionContainer = document.createElement('div');
+            missionContainer.className = 'mission-bars';
+            missionNames.forEach((name) => {
+                const missionRate = period.missionRates.find((mission) => mission.name === name) || {
+                    rate: 0,
+                    hasData: false
+                };
+                missionContainer.appendChild(createInsightBar(name, missionRate.rate, 'mission', missionRate.hasData));
+            });
+            periodBlock.appendChild(missionContainer);
+        } else {
+            const empty = document.createElement('div');
+            empty.className = 'insight-empty';
+            empty.textContent = '미션 성공률을 계산할 데이터가 없습니다.';
+            periodBlock.appendChild(empty);
+        }
+
+        contentInsightsChart.appendChild(periodBlock);
+    });
+}
+
+function createInsightBar(label, rate, type, hasData) {
+    const clampedRate = clampRate(rate);
+    const wrapper = document.createElement('div');
+    wrapper.className = `insight-bar ${type}${hasData ? '' : ' muted'}`;
+
+    const barLabel = document.createElement('span');
+    barLabel.className = 'insight-bar-label';
+    barLabel.textContent = label;
+
+    const barTrack = document.createElement('div');
+    barTrack.className = 'insight-bar-track';
+    const barFill = document.createElement('div');
+    barFill.className = 'insight-bar-fill';
+    barFill.style.width = `${clampedRate}%`;
+    barFill.setAttribute('aria-valuemin', '0');
+    barFill.setAttribute('aria-valuemax', '100');
+    barFill.setAttribute('aria-valuenow', clampedRate.toFixed(1));
+    barTrack.appendChild(barFill);
+
+    const value = document.createElement('span');
+    value.className = 'insight-bar-value';
+    value.textContent = hasData ? `${clampedRate.toFixed(1)}%` : '데이터 없음';
+
+    wrapper.appendChild(barLabel);
+    wrapper.appendChild(barTrack);
+    wrapper.appendChild(value);
+    return wrapper;
+}
+
+function buildInsightSeries(records, interval) {
+    const groups = new Map();
+    const missionNameSet = new Set();
+
+    records.forEach((record) => {
+        const participatedAt = record.participatedAt ? new Date(record.participatedAt) : null;
+        if (!participatedAt || Number.isNaN(participatedAt.getTime())) return;
+
+        const { key, label, order } = getIntervalKey(participatedAt, interval);
+        if (!groups.has(key)) {
+            groups.set(key, {
+                label,
+                order,
+                scenarioTotal: 0,
+                scenarioSuccess: 0,
+                missions: new Map()
+            });
+        }
+
+        const group = groups.get(key);
+        group.scenarioTotal += 1;
+        if (isContentRecordSuccessful(record)) {
+            group.scenarioSuccess += 1;
+        }
+
+        const missions = Array.isArray(record.missionStatuses) ? record.missionStatuses : [];
+        missions.forEach((mission, index) => {
+            const name = mission?.name?.trim() || `미션 ${index + 1}`;
+            missionNameSet.add(name);
+            const status = mission?.status;
+            const current = group.missions.get(name) || { success: 0, total: 0 };
+            current.total += 1;
+            if (status === 'completed') {
+                current.success += 1;
+            }
+            group.missions.set(name, current);
+        });
+    });
+
+    const sortedMissionNames = Array.from(missionNameSet).sort((a, b) => a.localeCompare(b, 'ko'));
+    const series = Array.from(groups.values())
+        .sort((a, b) => a.order - b.order)
+        .map((group) => {
+            const missionRates = sortedMissionNames.map((name) => {
+                const mission = group.missions.get(name) || { success: 0, total: 0 };
+                const rate = mission.total ? Math.round((mission.success / mission.total) * 1000) / 10 : 0;
+                return { name, rate, hasData: mission.total > 0 };
+            });
+
+            const scenarioRate = group.scenarioTotal
+                ? Math.round((group.scenarioSuccess / group.scenarioTotal) * 1000) / 10
+                : 0;
+
+            return {
+                label: group.label,
+                order: group.order,
+                scenarioRate,
+                hasScenarioData: group.scenarioTotal > 0,
+                missionRates
+            };
+        });
+
+    return { series, missionNames: sortedMissionNames };
+}
+
+function getIntervalKey(date, interval) {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+
+    if (interval === 'day') {
+        const label = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const order = new Date(year, month, day).getTime();
+        return { key: label, label, order };
+    }
+
+    if (interval === 'week') {
+        const { year: weekYear, week, startDate } = getWeekMeta(date);
+        const label = `${weekYear}년 ${String(week).padStart(2, '0')}주`;
+        return { key: `${weekYear}-W${week}`, label, order: startDate.getTime() };
+    }
+
+    const label = `${year}-${String(month + 1).padStart(2, '0')}월`;
+    const order = new Date(year, month, 1).getTime();
+    return { key: `${year}-${month + 1}`, label, order };
+}
+
+function getWeekMeta(date) {
+    const temp = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = temp.getUTCDay() || 7;
+    temp.setUTCDate(temp.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(temp.getUTCFullYear(), 0, 1));
+    const week = Math.ceil(((temp - yearStart) / 86400000 + 1) / 7);
+    const startDate = new Date(temp);
+    startDate.setUTCDate(temp.getUTCDate() - (temp.getUTCDay() || 7) + 1);
+    return { year: temp.getUTCFullYear(), week, startDate };
+}
+
+function clampRate(value) {
+    if (!Number.isFinite(value)) return 0;
+    return Math.min(Math.max(value, 0), 100);
 }
