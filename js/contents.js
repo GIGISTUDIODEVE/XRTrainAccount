@@ -24,7 +24,8 @@ import {
     contentStatsSuccess,
     contentStatsFailure,
     contentStatsRate,
-    contentStatsMissionAverage
+    contentStatsMissionAverage,
+    contentStatsPlayAverage
 } from './domElements.js';
 import { state } from './state.js';
 import {
@@ -519,6 +520,8 @@ function calculateContentStats(records) {
 
     let missionDurationSum = 0;
     let missionDurationCount = 0;
+    let playDurationSum = 0;
+    let playDurationCount = 0;
 
     records.forEach((record) => {
         const durations = Array.isArray(record.missionDurations) ? record.missionDurations : [];
@@ -528,10 +531,25 @@ function calculateContentStats(records) {
                 missionDurationCount += 1;
             }
         });
+
+        if (Number.isFinite(record.totalPlayTime) && record.totalPlayTime >= 0) {
+            playDurationSum += record.totalPlayTime;
+            playDurationCount += 1;
+        }
     });
 
     const averageMissionSeconds = missionDurationCount ? missionDurationSum / missionDurationCount : 0;
-    return { total, success, failure, successRate, averageMissionSeconds, missionDurationCount };
+    const averagePlaySeconds = playDurationCount ? playDurationSum / playDurationCount : 0;
+    return {
+        total,
+        success,
+        failure,
+        successRate,
+        averageMissionSeconds,
+        missionDurationCount,
+        averagePlaySeconds,
+        playDurationCount
+    };
 }
 
 function isContentRecordSuccessful(record) {
@@ -548,7 +566,8 @@ function renderContentStats(records, filtersActive) {
         !contentStatsSuccess ||
         !contentStatsFailure ||
         !contentStatsRate ||
-        !contentStatsMissionAverage
+        !contentStatsMissionAverage ||
+        !contentStatsPlayAverage
     ) {
         return;
     }
@@ -561,11 +580,20 @@ function renderContentStats(records, filtersActive) {
         contentStatsFailure.textContent = '0';
         contentStatsRate.textContent = '0%';
         contentStatsMissionAverage.textContent = '-';
+        contentStatsPlayAverage.textContent = '-';
         return;
     }
 
-    const { total, success, failure, successRate, averageMissionSeconds, missionDurationCount } =
-        calculateContentStats(records);
+    const {
+        total,
+        success,
+        failure,
+        successRate,
+        averageMissionSeconds,
+        missionDurationCount,
+        averagePlaySeconds,
+        playDurationCount
+    } = calculateContentStats(records);
     const hasRecords = total > 0;
 
     contentStatsSection.classList.toggle('inactive', !hasRecords);
@@ -575,6 +603,9 @@ function renderContentStats(records, filtersActive) {
     contentStatsRate.textContent = `${successRate.toFixed(1)}%`;
     contentStatsMissionAverage.textContent = missionDurationCount
         ? formatDurationSeconds(averageMissionSeconds)
+        : '-';
+    contentStatsPlayAverage.textContent = playDurationCount
+        ? formatDurationSeconds(averagePlaySeconds)
         : '-';
     contentStatsMessage.textContent = hasRecords
         ? '현재 선택한 조건에 맞는 기록의 요약입니다.'
