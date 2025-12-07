@@ -469,6 +469,13 @@
                                     <p class="welcome-message">참가자별 시나리오 진행 내역과 소요 시간을 확인하세요.</p>
                                 </div>
                                 <div class="content-actions">
+                                    <div class="date-filter" aria-label="기간 필터">
+                                        <label for="contentDateFrom">시작일</label>
+                                        <input type="date" id="contentDateFrom" aria-label="기록 시작일 선택">
+                                        <span class="date-separator">~</span>
+                                        <label for="contentDateTo">종료일</label>
+                                        <input type="date" id="contentDateTo" aria-label="기록 종료일 선택">
+                                    </div>
                                     <div class="search-input" role="search">
                                         <i class="fas fa-search" aria-hidden="true"></i>
                                         <input type="search" id="contentSearchInput" placeholder="참가자 이름 검색" aria-label="참가자 이름으로 콘텐츠 기록 검색">

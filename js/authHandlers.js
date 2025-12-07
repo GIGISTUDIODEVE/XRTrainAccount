@@ -289,6 +289,8 @@ async function handleLogout() {
         state.participantSortDirection = 'desc';
         state.contents = [];
         state.contentSearchQuery = '';
+        state.contentDateFrom = '';
+        state.contentDateTo = '';
         state.contentPage = 1;
         state.contentSortKey = 'participatedAt';
         state.contentSortDirection = 'desc';

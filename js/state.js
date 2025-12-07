@@ -11,6 +11,8 @@ export const state = {
     contentSortKey: 'participatedAt',
     contentSortDirection: 'desc',
     contentSearchQuery: '',
+    contentDateFrom: '',
+    contentDateTo: '',
     participantSearchQuery: '',
     scenarios: [],
     scenarioPage: 1,

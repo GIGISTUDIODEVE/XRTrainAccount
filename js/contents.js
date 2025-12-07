@@ -4,6 +4,8 @@ import {
     contentNextPageBtn,
     contentPageNumbers,
     contentPrevPageBtn,
+    contentDateFromInput,
+    contentDateToInput,
     contentSearchInput,
     contentSortButtons,
     contentTableBody,
@@ -21,6 +23,7 @@ import {
 } from './utils.js';
 
 const CONTENT_PAGE_SIZE = 25;
+const DEFAULT_MONTH_RANGE = 3;
 const DEFAULT_SORT_DIRECTION = {
     participantName: 'asc',
     participatedAt: 'desc',
@@ -68,6 +71,7 @@ export async function loadContents() {
         const contentsQuery = query(collection(db, 'contents'), where('adminId', '==', state.currentUser.uid));
         const snapshot = await getDocs(contentsQuery);
         state.contents = snapshot.docs.map((docSnap) => normalizeContentRecord(docSnap.data(), docSnap.id));
+        initializeDefaultContentDateRange();
         updateContentPageAfterLoad(state.contents.length);
     } catch (error) {
         if (!isFirestorePermissionError(error)) {
@@ -132,10 +136,22 @@ function compareValues(a, b, direction) {
 }
 
 function getFilteredContents() {
+    initializeDefaultContentDateRange();
+    const fromDate = parseDateStart(state.contentDateFrom);
+    const toDate = parseDateEnd(state.contentDateTo);
     const query = (state.contentSearchQuery || '').trim().toLowerCase();
-    if (!query) return [...state.contents];
+    const baseRecords = state.contents.filter((record) => {
+        const participatedAt = record.participatedAt ? new Date(record.participatedAt) : null;
+        const participatedTime = participatedAt?.getTime();
 
-    return state.contents.filter((record) => {
+        if (fromDate && (!participatedTime || participatedTime < fromDate.getTime())) return false;
+        if (toDate && (!participatedTime || participatedTime > toDate.getTime())) return false;
+        return true;
+    });
+
+    if (!query) return baseRecords;
+
+    return baseRecords.filter((record) => {
         const participantName = getParticipantName(record.participantUid).toLowerCase();
         return participantName.includes(query);
     });
@@ -157,6 +173,8 @@ function getSortedContents(records = getFilteredContents()) {
 
 export function renderContentTable() {
     if (!contentTableBody) return;
+    initializeDefaultContentDateRange();
+    syncContentDateInputs();
     if (contentSearchInput) {
         contentSearchInput.value = state.contentSearchQuery;
     }
@@ -174,8 +192,10 @@ export function renderContentTable() {
         const td = document.createElement('td');
         td.colSpan = 6;
         const hasSearchQuery = Boolean((state.contentSearchQuery || '').trim());
-        td.textContent = hasSearchQuery
-            ? '조건에 맞는 콘텐츠 기록이 없습니다. 참가자 이름을 확인해주세요.'
+        const hasDateFilter = Boolean(state.contentDateFrom || state.contentDateTo);
+        const hasFilters = hasSearchQuery || hasDateFilter;
+        td.textContent = hasFilters
+            ? '조건에 맞는 콘텐츠 기록이 없습니다. 검색어와 기간을 조정해보세요.'
             : '콘텐츠 기록이 없습니다. 시나리오 진행 후 데이터가 저장되면 이곳에서 확인할 수 있습니다.';
         emptyRow.appendChild(td);
         contentTableBody.appendChild(emptyRow);
@@ -305,7 +325,83 @@ export function wireContentEvents(onRefresh) {
         renderContentTable();
     });
 
+    contentDateFromInput?.addEventListener('change', (event) => {
+        handleContentDateChange('from', event.target.value || '');
+    });
+
+    contentDateToInput?.addEventListener('change', (event) => {
+        handleContentDateChange('to', event.target.value || '');
+    });
+
     setupContentSorting();
+}
+
+function handleContentDateChange(type, nextValue) {
+    const fromCandidate = type === 'from' ? nextValue : state.contentDateFrom;
+    const toCandidate = type === 'to' ? nextValue : state.contentDateTo;
+    const fromDate = parseDateStart(fromCandidate);
+    const toDate = parseDateEnd(toCandidate);
+
+    if (fromDate && toDate && fromDate.getTime() > toDate.getTime()) {
+        showToast('시작일이 종료일보다 늦을 수 없습니다.', 'warning');
+        syncContentDateInputs();
+        return;
+    }
+
+    if (type === 'from') {
+        state.contentDateFrom = nextValue;
+    } else {
+        state.contentDateTo = nextValue;
+    }
+
+    state.contentPage = 1;
+    renderContentTable();
+}
+
+function initializeDefaultContentDateRange() {
+    if (state.contentDateFrom && state.contentDateTo) return;
+
+    const { from, to } = getDefaultDateRange();
+    state.contentDateFrom = state.contentDateFrom || from;
+    state.contentDateTo = state.contentDateTo || to;
+}
+
+function getDefaultDateRange() {
+    const today = new Date();
+    const start = new Date(today);
+    start.setMonth(start.getMonth() - DEFAULT_MONTH_RANGE);
+    return {
+        from: formatDateInputValue(start),
+        to: formatDateInputValue(today)
+    };
+}
+
+function parseDateStart(value) {
+    if (!value) return null;
+    const date = new Date(`${value}T00:00:00`);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function parseDateEnd(value) {
+    if (!value) return null;
+    const date = new Date(`${value}T23:59:59.999`);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatDateInputValue(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function syncContentDateInputs() {
+    if (contentDateFromInput) {
+        contentDateFromInput.value = state.contentDateFrom || '';
+    }
+    if (contentDateToInput) {
+        contentDateToInput.value = state.contentDateTo || '';
+    }
 }
 
 function resetContentScroll() {
