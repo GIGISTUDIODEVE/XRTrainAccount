@@ -233,6 +233,7 @@
                     <button class="tab-button" data-target="participantView" id="tabParticipants">참가자 관리</button>
                     <button class="tab-button" data-target="scenarioView" id="tabScenarios">시나리오 관리</button>
                     <button class="tab-button" data-target="contentView" id="tabContents">콘텐츠 관리</button>
+                    <button class="tab-button" data-target="testView" id="tabTest">테스트 페이지</button>
                 </div>
 
                 <div class="dashboard-panels">
@@ -310,29 +311,77 @@
                                 </div>
                             </div>
 
-                            <div class="table-wrapper">
-                                <table class="participant-table">
-                                    <thead>
-                                        <tr>
-                                            <th>이름</th>
-                                            <th>이메일</th>
-                                            <th>가입일</th>
-                                            <th>생년월일 / 만나이</th>
-                                            <th>성별</th>
-                                            <th>거주지역</th>
-                                            <th>질환명</th>
-                                            <th>상태</th>
-                                            <th>기타</th>
-                                            <th>마지막 접속</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="participantTableBody">
-                                        <tr class="empty-row">
-                                            <td colspan="11">등록된 참가자가 없습니다. 오른쪽 상단의 참가자 추가 버튼을 눌러 새 데이터를 입력하세요.</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div class="table-wrapper participant-table-wrapper">
+                                <div class="participant-table-scroll" id="participantTableScroll">
+                                    <table class="participant-table">
+                                        <thead>
+                                            <tr>
+                                                <th>
+                                                    <button class="sort-button participant-sort-button" type="button" data-sort-key="fullName">
+                                                        <span>이름</span>
+                                                        <span class="sort-icon" aria-hidden="true">↕</span>
+                                                    </button>
+                                                </th>
+                                                <th>
+                                                    <button class="sort-button participant-sort-button" type="button" data-sort-key="email">
+                                                        <span>이메일</span>
+                                                        <span class="sort-icon" aria-hidden="true">↕</span>
+                                                    </button>
+                                                </th>
+                                                <th>
+                                                    <button class="sort-button participant-sort-button" type="button" data-sort-key="createdAt">
+                                                        <span>가입일</span>
+                                                        <span class="sort-icon" aria-hidden="true">↕</span>
+                                                    </button>
+                                                </th>
+                                                <th>
+                                                    <button class="sort-button participant-sort-button" type="button" data-sort-key="birthDate">
+                                                        <span>생년월일 / 만나이</span>
+                                                        <span class="sort-icon" aria-hidden="true">↕</span>
+                                                    </button>
+                                                </th>
+                                                <th>성별</th>
+                                                <th>
+                                                    <button class="sort-button participant-sort-button" type="button" data-sort-key="region">
+                                                        <span>거주지역</span>
+                                                        <span class="sort-icon" aria-hidden="true">↕</span>
+                                                    </button>
+                                                </th>
+                                                <th>질환명</th>
+                                                <th>
+                                                    <button class="sort-button participant-sort-button" type="button" data-sort-key="status">
+                                                        <span>상태</span>
+                                                        <span class="sort-icon" aria-hidden="true">↕</span>
+                                                    </button>
+                                                </th>
+                                                <th>기타</th>
+                                                <th>
+                                                    <button class="sort-button participant-sort-button" type="button" data-sort-key="lastSeen">
+                                                        <span>마지막 접속</span>
+                                                        <span class="sort-icon" aria-hidden="true">↕</span>
+                                                    </button>
+                                                </th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="participantTableBody">
+                                            <tr class="empty-row">
+                                                <td colspan="11">등록된 참가자가 없습니다. 오른쪽 상단의 참가자 추가 버튼을 눌러 새 데이터를 입력하세요.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="pagination table-pagination participants-pagination">
+                                    <button class="btn-secondary" id="participantPrevPage" aria-label="이전 페이지">
+                                        <span class="chevron">&lt;</span>
+                                        <span>이전</span>
+                                    </button>
+                                    <div class="page-numbers" id="participantPageNumbers"></div>
+                                    <button class="btn-secondary" id="participantNextPage" aria-label="다음 페이지">
+                                        <span>다음</span>
+                                        <span class="chevron">&gt;</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -345,29 +394,68 @@
                                     <h2>시나리오 목록</h2>
                                     <p class="welcome-message">관리자별 시나리오를 추가·수정하고 미션 구성을 확인하세요.</p>
                                 </div>
-                                <button class="btn-primary" id="addScenarioBtn">
-                                    <i class="fas fa-plus-circle"></i>
-                                    <span>시나리오 추가</span>
-                                </button>
+                                <div class="participant-actions">
+                                    <div class="search-input" role="search">
+                                        <i class="fas fa-search" aria-hidden="true"></i>
+                                        <input type="search" id="scenarioSearch" placeholder="제목으로 검색" aria-label="시나리오 제목 검색">
+                                    </div>
+                                    <button class="btn-primary" id="addScenarioBtn">
+                                        <i class="fas fa-plus-circle"></i>
+                                        <span>시나리오 추가</span>
+                                    </button>
+                                </div>
                             </div>
 
-                            <div class="table-wrapper">
-                                <table class="participant-table">
-                                    <thead>
-                                        <tr>
-                                            <th>제목</th>
-                                            <th>난이도</th>
-                                            <th>생성일</th>
-                                            <th>미션 수</th>
-                                            <th></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="scenarioTableBody">
-                                        <tr class="empty-row">
-                                            <td colspan="5">등록된 시나리오가 없습니다. 오른쪽 상단의 시나리오 추가 버튼을 눌러 새 데이터를 입력하세요.</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div class="table-wrapper scenario-table-wrapper">
+                                <div class="participant-table-scroll" id="scenarioTableScroll">
+                                    <table class="participant-table">
+                                        <thead>
+                                            <tr>
+                                                <th>
+                                                    <button class="sort-button scenario-sort-button" type="button" data-sort-key="title">
+                                                        <span>제목</span>
+                                                        <span class="sort-icon" aria-hidden="true">↕</span>
+                                                    </button>
+                                                </th>
+                                                <th>
+                                                    <button class="sort-button scenario-sort-button" type="button" data-sort-key="difficulty">
+                                                        <span>난이도</span>
+                                                        <span class="sort-icon" aria-hidden="true">↕</span>
+                                                    </button>
+                                                </th>
+                                                <th>
+                                                    <button class="sort-button scenario-sort-button" type="button" data-sort-key="createdAt">
+                                                        <span>생성일</span>
+                                                        <span class="sort-icon" aria-hidden="true">↕</span>
+                                                    </button>
+                                                </th>
+                                                <th>
+                                                    <button class="sort-button scenario-sort-button" type="button" data-sort-key="missionCount">
+                                                        <span>미션 수</span>
+                                                        <span class="sort-icon" aria-hidden="true">↕</span>
+                                                    </button>
+                                                </th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="scenarioTableBody">
+                                            <tr class="empty-row">
+                                                <td colspan="5">등록된 시나리오가 없습니다. 오른쪽 상단의 시나리오 추가 버튼을 눌러 새 데이터를 입력하세요.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="pagination table-pagination scenarios-pagination">
+                                    <button class="btn-secondary" id="scenarioPrevPage" aria-label="이전 페이지">
+                                        <span class="chevron">&lt;</span>
+                                        <span>이전</span>
+                                    </button>
+                                    <div class="page-numbers" id="scenarioPageNumbers"></div>
+                                    <button class="btn-secondary" id="scenarioNextPage" aria-label="다음 페이지">
+                                        <span>다음</span>
+                                        <span class="chevron">&gt;</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -381,30 +469,221 @@
                                     <p class="welcome-message">참가자별 시나리오 진행 내역과 소요 시간을 확인하세요.</p>
                                 </div>
                                 <div class="content-actions">
+                                    <div class="select-group" aria-label="콘텐츠 필터">
+                                        <div class="select-input">
+                                            <label for="contentScenarioFilter">시나리오</label>
+                                            <select id="contentScenarioFilter" aria-label="시나리오별 콘텐츠 기록 필터">
+                                                <option value="">전체 시나리오</option>
+                                            </select>
+                                        </div>
+                                        <div class="select-input">
+                                            <label for="contentDifficultyFilter">난이도</label>
+                                            <select id="contentDifficultyFilter" aria-label="난이도별 콘텐츠 기록 필터">
+                                                <option value="">전체 난이도</option>
+                                                <option value="easy">쉬움</option>
+                                                <option value="medium">보통</option>
+                                                <option value="hard">어려움</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="date-filter" aria-label="기간 필터">
+                                        <label for="contentDateFrom">시작일</label>
+                                        <input type="date" id="contentDateFrom" aria-label="기록 시작일 선택">
+                                        <span class="date-separator">~</span>
+                                        <label for="contentDateTo">종료일</label>
+                                        <input type="date" id="contentDateTo" aria-label="기록 종료일 선택">
+                                    </div>
+                                    <div class="search-input" role="search">
+                                        <i class="fas fa-search" aria-hidden="true"></i>
+                                        <input type="search" id="contentSearchInput" placeholder="참가자 이름 검색" aria-label="참가자 이름으로 콘텐츠 기록 검색">
+                                    </div>
                                     <button class="btn-secondary" id="refreshContentsBtn">
                                         <i class="fas fa-rotate"></i>
                                         <span>새로고침</span>
                                     </button>
+                                    <button class="btn-primary" id="contentInsightsBtn" disabled>
+                                        <i class="fas fa-chart-line"></i>
+                                        <span>상세 통계</span>
+                                    </button>
                                 </div>
                             </div>
 
-                            <div class="table-wrapper">
-                                <table class="participant-table">
-                                    <thead>
-                                        <tr>
-                                            <th>참가자 이름</th>
-                                            <th>참가 일시</th>
-                                            <th>시나리오 이름</th>
-                                            <th>시나리오 난이도</th>
-                                            <th>시나리오 총 플레이 시간</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="contentTableBody">
-                                        <tr class="empty-row">
-                                            <td colspan="5">콘텐츠 기록이 없습니다. 시나리오 진행 후 데이터가 저장되면 이곳에서 확인할 수 있습니다.</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div class="table-wrapper content-table-wrapper">
+                                <div class="content-table-scroll" id="contentTableScroll">
+                                    <table class="participant-table">
+                                        <thead>
+                                            <tr>
+                                            <th>#</th>
+                                            <th>
+                                                <button class="sort-button content-sort-button" type="button" data-sort-key="participantName">
+                                                    <span>참가자 이름</span>
+                                                    <span class="sort-icon" aria-hidden="true">↕</span>
+                                                </button>
+                                            </th>
+                                            <th>
+                                                <button class="sort-button content-sort-button" type="button" data-sort-key="participatedAt">
+                                                    <span>참가 일시</span>
+                                                    <span class="sort-icon" aria-hidden="true">↕</span>
+                                                </button>
+                                            </th>
+                                            <th>
+                                                <button class="sort-button content-sort-button" type="button" data-sort-key="scenarioTitle">
+                                                    <span>시나리오 이름</span>
+                                                    <span class="sort-icon" aria-hidden="true">↕</span>
+                                                </button>
+                                            </th>
+                                            <th>
+                                                <button class="sort-button content-sort-button" type="button" data-sort-key="difficulty">
+                                                    <span>시나리오 난이도</span>
+                                                    <span class="sort-icon" aria-hidden="true">↕</span>
+                                                </button>
+                                            </th>
+                                            <th>
+                                                <button class="sort-button content-sort-button" type="button" data-sort-key="totalPlayTime">
+                                                    <span>시나리오 총 플레이 시간</span>
+                                                    <span class="sort-icon" aria-hidden="true">↕</span>
+                                                </button>
+                                            </th>
+                                            <th aria-hidden="true"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="contentTableBody">
+                                            <tr class="empty-row">
+                                                <td colspan="7">콘텐츠 기록이 없습니다. 시나리오 진행 후 데이터가 저장되면 이곳에서 확인할 수 있습니다.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="pagination content-pagination">
+                                    <button class="btn-secondary" id="contentPrevPage" aria-label="이전 페이지">
+                                        <span class="chevron">&lt;</span>
+                                        <span>이전</span>
+                                    </button>
+                                    <div class="page-numbers" id="contentPageNumbers"></div>
+                                    <button class="btn-secondary" id="contentNextPage" aria-label="다음 페이지">
+                                        <span>다음</span>
+                                        <span class="chevron">&gt;</span>
+                                    </button>
+                                </div>
+
+                                <div class="content-stats" id="contentStats">
+                                    <div class="content-stats-header">
+                                        <div>
+                                            <p class="eyebrow">기록 요약</p>
+                                            <h3>선택한 조건의 성과</h3>
+                                        </div>
+                                        <p class="stats-message" id="contentStatsMessage">참가자 검색, 시나리오, 난이도, 기간을 모두 설정하면 요약을 확인할 수 있습니다.</p>
+                                    </div>
+                                    <div class="content-stats-grid">
+                                        <div class="stat-card">
+                                            <p>총 참여 횟수</p>
+                                            <strong id="contentStatsTotal">0</strong>
+                                        </div>
+                                        <div class="stat-card success">
+                                            <p>총 성공</p>
+                                            <strong id="contentStatsSuccess">0</strong>
+                                        </div>
+                                        <div class="stat-card failure">
+                                            <p>총 실패</p>
+                                            <strong id="contentStatsFailure">0</strong>
+                                        </div>
+                                        <div class="stat-card duration">
+                                            <p>총 미션 평균 시간</p>
+                                            <strong id="contentStatsMissionAverage">-</strong>
+                                        </div>
+                                        <div class="stat-card duration">
+                                            <p>평균 시나리오 플레이 시간</p>
+                                            <strong id="contentStatsScenarioAverage">-</strong>
+                                        </div>
+                                        <div class="stat-card rate">
+                                            <p>성공률</p>
+                                            <strong id="contentStatsRate">0%</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-content hidden" id="testView">
+                        <div class="welcome-card test-card">
+                            <div class="participants-header">
+                                <div>
+                                    <p class="eyebrow">테스트 페이지</p>
+                                    <h2>시나리오 플레이 기록 시뮬레이션</h2>
+                                    <p class="welcome-message">관리 중인 참가자와 시나리오를 선택해 테스트용 완료 데이터를 기록하세요.</p>
+                                </div>
+                            </div>
+
+                            <div class="test-grid">
+                                <div class="test-form">
+                                    <div class="input-group">
+                                        <label class="field-label" for="testParticipantSelect">참가자 선택</label>
+                                        <select id="testParticipantSelect">
+                                            <option value="">참가자 선택</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="input-group">
+                                        <label class="field-label" for="testScenarioSelect">시나리오 선택</label>
+                                        <select id="testScenarioSelect">
+                                            <option value="">시나리오 선택</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="grid two-column">
+                                        <div class="input-group">
+                                            <label class="field-label" for="testParticipatedAt">완료 일시</label>
+                                            <input type="datetime-local" id="testParticipatedAt">
+                                        </div>
+                                        <div class="input-group">
+                                            <label class="field-label" for="testTotalPlayTime">총 플레이 시간(초)</label>
+                                            <input type="number" id="testTotalPlayTime" min="0" value="300">
+                                        </div>
+                                    </div>
+
+                                    <div class="grid two-column">
+                                        <div class="input-group">
+                                            <label class="field-label" for="testRetryCount">재도전 횟수</label>
+                                            <input type="number" id="testRetryCount" min="0" value="0">
+                                        </div>
+                                        <div class="input-group">
+                                            <label class="field-label" for="testNotes">비고</label>
+                                            <input type="text" id="testNotes" placeholder="메모를 남기세요 (선택)">
+                                        </div>
+                                    </div>
+
+                                    <div class="mission-inputs" id="testMissionList">
+                                        <div class="empty-helper">시나리오를 선택하면 미션 상태를 입력할 수 있습니다.</div>
+                                    </div>
+
+                                    <div class="modal-actions">
+                                        <button class="btn-primary" id="testAddRecordBtn">
+                                            <span>콘텐츠 완료 기록 추가</span>
+                                            <i class="fas fa-check-circle"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="table-wrapper">
+                                    <table class="participant-table">
+                                        <thead>
+                                            <tr>
+                                                <th>참가자</th>
+                                                <th>시나리오</th>
+                                                <th>완료 일시</th>
+                                                <th>총 플레이 시간</th>
+                                                <th>재도전</th>
+                                                <th>미션 결과</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="testRecordTableBody">
+                                            <tr class="empty-row">
+                                                <td colspan="6">테스트 기록이 없습니다. 왼쪽에서 데이터를 입력해 완료를 시뮬레이션하세요.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -549,6 +828,82 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- 콘텐츠 기록 상세 모달 -->
+    <div class="modal-overlay hidden" id="contentDetailModal" aria-hidden="true">
+        <div class="modal-card content-detail-card">
+            <div class="modal-header">
+                <div>
+                    <p class="eyebrow">콘텐츠 기록</p>
+                    <h2>기록 상세</h2>
+                </div>
+                <button class="icon-button" id="closeContentDetailModal" aria-label="닫기">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="content-detail-body" id="contentDetailBody">
+                <div class="empty-helper">선택한 콘텐츠 기록의 상세 정보가 이곳에 표시됩니다.</div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" id="dismissContentDetail">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 콘텐츠 통계 모달 -->
+    <div class="modal-overlay hidden" id="contentInsightsModal" aria-hidden="true">
+        <div class="modal-card content-insights-card">
+            <div class="modal-header">
+                <div>
+                    <p class="eyebrow">상세 통계</p>
+                    <h2>콘텐츠 기록 인사이트</h2>
+                </div>
+                <button class="icon-button" id="closeContentInsightsModal" aria-label="닫기">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="content-insights-body">
+                <div class="content-insights-header">
+                    <p class="stats-message" id="contentInsightsMessage">모든 필터를 설정하면 기간별 성과를 확인할 수 있습니다.</p>
+                    <div class="interval-toggle" role="group" aria-label="기간 단위 선택">
+                        <button type="button" class="toggle-button" data-interval="day">일</button>
+                        <button type="button" class="toggle-button" data-interval="week">주</button>
+                        <button type="button" class="toggle-button active" data-interval="month">월</button>
+                    </div>
+                </div>
+
+                <div class="content-insights-summary">
+                    <div class="stat-card">
+                        <p>총 참여</p>
+                        <strong id="contentInsightsTotal">0</strong>
+                    </div>
+                    <div class="stat-card success">
+                        <p>성공</p>
+                        <strong id="contentInsightsSuccess">0</strong>
+                    </div>
+                    <div class="stat-card failure">
+                        <p>실패</p>
+                        <strong id="contentInsightsFailure">0</strong>
+                    </div>
+                    <div class="stat-card rate">
+                        <p>성공률</p>
+                        <strong id="contentInsightsRate">0%</strong>
+                    </div>
+                </div>
+
+                <div class="content-insights-chart" id="contentInsightsChart">
+                    <div class="empty-helper">조건에 맞는 기록이 있을 때 기간별 시나리오 및 미션 성공률을 보여줍니다.</div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" id="dismissContentInsights">닫기</button>
+            </div>
         </div>
     </div>
 
