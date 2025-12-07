@@ -21,11 +21,17 @@ import {
     missionList,
     missionNameInput,
     missionQuestionsList,
+    scenarioSearchInput,
     scenarioDifficultyInput,
     scenarioForm,
+    scenarioPageNumbers,
     scenarioModal,
     scenarioModalTitle,
+    scenarioNextPageBtn,
+    scenarioPrevPageBtn,
     scenarioTableBody,
+    scenarioTableScroll,
+    scenarioSortButtons,
     scenarioTitleInput
 } from './domElements.js';
 import { state } from './state.js';
@@ -38,6 +44,19 @@ import {
 } from './utils.js';
 
 const MAX_EXPECTED_ITEMS = 3;
+const SCENARIO_PAGE_SIZE = 25;
+const DEFAULT_SCENARIO_SORT_DIRECTION = {
+    title: 'asc',
+    difficulty: 'asc',
+    createdAt: 'desc',
+    missionCount: 'desc'
+};
+
+const difficultyOrder = {
+    easy: 1,
+    medium: 2,
+    hard: 3
+};
 
 function normalizeMission(mission = {}) {
     const expectedQuestions = Array.isArray(mission.expectedQuestions) ? mission.expectedQuestions : [];
@@ -157,6 +176,8 @@ export async function loadScenarios() {
                 createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : data.createdAt
             };
         });
+
+        updateScenarioPageAfterLoad();
     } catch (error) {
         if (!isFirestorePermissionError(error)) {
             console.error('Scenarios load error:', error);
@@ -169,18 +190,37 @@ export function renderScenarioTable() {
     if (!scenarioTableBody) return;
     scenarioTableBody.innerHTML = '';
 
-    if (!state.scenarios.length) {
+    if (scenarioSearchInput) {
+        scenarioSearchInput.value = state.scenarioSearchQuery;
+    }
+
+    const filteredScenarios = getFilteredScenarios();
+    updateScenarioPageAfterLoad(filteredScenarios.length);
+    const sortedScenarios = getSortedScenarios(filteredScenarios);
+    const totalPages = Math.ceil(sortedScenarios.length / SCENARIO_PAGE_SIZE);
+    const hasScenarios = Boolean(sortedScenarios.length);
+
+    if (!hasScenarios) {
         const emptyRow = document.createElement('tr');
         emptyRow.className = 'empty-row';
         const td = document.createElement('td');
         td.colSpan = 5;
-        td.textContent = '등록된 시나리오가 없습니다. 오른쪽 상단의 시나리오 추가 버튼을 눌러 새 데이터를 입력하세요.';
+        const hasSearchQuery = Boolean((state.scenarioSearchQuery || '').trim());
+        td.textContent = hasSearchQuery
+            ? '검색 결과가 없습니다. 제목을 다시 확인해주세요.'
+            : '등록된 시나리오가 없습니다. 오른쪽 상단의 시나리오 추가 버튼을 눌러 새 데이터를 입력하세요.';
         emptyRow.appendChild(td);
         scenarioTableBody.appendChild(emptyRow);
+        renderScenarioPagination(totalPages, hasScenarios);
+        syncScenarioSortIndicators();
         return;
     }
 
-    state.scenarios.forEach((scenario) => {
+    const startIndex = (state.scenarioPage - 1) * SCENARIO_PAGE_SIZE;
+    const endIndex = startIndex + SCENARIO_PAGE_SIZE;
+    const pageScenarios = sortedScenarios.slice(startIndex, endIndex);
+
+    pageScenarios.forEach((scenario) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${scenario.title || '-'}</td>
@@ -201,6 +241,153 @@ export function renderScenarioTable() {
         actionsCell.appendChild(editBtn);
         scenarioTableBody.appendChild(tr);
     });
+
+    renderScenarioPagination(totalPages, hasScenarios);
+    syncScenarioSortIndicators();
+    resetScenarioScroll();
+}
+
+function getFilteredScenarios() {
+    const query = state.scenarioSearchQuery?.trim().toLowerCase();
+    if (!query) {
+        return [...state.scenarios];
+    }
+
+    return state.scenarios.filter((scenario) => (scenario.title || '').toLowerCase().includes(query));
+}
+
+function getScenarioSortValue(scenario, sortKey) {
+    switch (sortKey) {
+        case 'title':
+            return scenario.title || '';
+        case 'difficulty':
+            return difficultyOrder[scenario.difficulty] || 0;
+        case 'missionCount':
+            return Array.isArray(scenario.missions) ? scenario.missions.length : 0;
+        case 'createdAt':
+        default:
+            return scenario.createdAt ? new Date(scenario.createdAt).getTime() : null;
+    }
+}
+
+function compareScenarioValues(a, b, direction) {
+    if (a === b) return 0;
+
+    const isAsc = direction === 'asc';
+    const aEmpty = a === null || a === undefined;
+    const bEmpty = b === null || b === undefined;
+
+    if (aEmpty && bEmpty) return 0;
+    if (aEmpty) return isAsc ? 1 : -1;
+    if (bEmpty) return isAsc ? -1 : 1;
+
+    if (typeof a === 'string' || typeof b === 'string') {
+        const aString = String(a);
+        const bString = String(b);
+        return isAsc ? aString.localeCompare(bString, 'ko') : bString.localeCompare(aString, 'ko');
+    }
+
+    if (a > b) return isAsc ? 1 : -1;
+    if (a < b) return isAsc ? -1 : 1;
+    return 0;
+}
+
+function getSortedScenarios(records = getFilteredScenarios()) {
+    const sortKey = state.scenarioSortKey || 'createdAt';
+    const sortDirection = state.scenarioSortDirection || DEFAULT_SCENARIO_SORT_DIRECTION[sortKey] || 'desc';
+    const sortableRecords = [...records];
+
+    sortableRecords.sort((a, b) => {
+        const aValue = getScenarioSortValue(a, sortKey);
+        const bValue = getScenarioSortValue(b, sortKey);
+        return compareScenarioValues(aValue, bValue, sortDirection);
+    });
+
+    return sortableRecords;
+}
+
+function renderScenarioPagination(totalPages, hasScenarios) {
+    if (!scenarioPrevPageBtn || !scenarioNextPageBtn || !scenarioPageNumbers) return;
+
+    const safeTotalPages = hasScenarios ? Math.max(totalPages, 1) : 0;
+    scenarioPageNumbers.innerHTML = '';
+    const pages = buildPageList(safeTotalPages, hasScenarios ? state.scenarioPage : 0);
+
+    pages.forEach((page, index) => {
+        if (page === 'ellipsis') {
+            const ellipsis = document.createElement('span');
+            ellipsis.className = 'page-ellipsis';
+            ellipsis.textContent = '...';
+            scenarioPageNumbers.appendChild(ellipsis);
+        } else {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = `page-number${page === state.scenarioPage ? ' active' : ''}`;
+            button.textContent = page;
+            button.addEventListener('click', () => {
+                if (state.scenarioPage === page) return;
+                state.scenarioPage = page;
+                renderScenarioTable();
+            });
+            scenarioPageNumbers.appendChild(button);
+        }
+
+        if (index < pages.length - 1) {
+            const separator = document.createElement('span');
+            separator.className = 'page-separator';
+            separator.textContent = '.';
+            scenarioPageNumbers.appendChild(separator);
+        }
+    });
+
+    scenarioPrevPageBtn.disabled = !hasScenarios || state.scenarioPage <= 1;
+    scenarioNextPageBtn.disabled = !hasScenarios || state.scenarioPage >= safeTotalPages;
+}
+
+function buildPageList(totalPages, currentPage) {
+    if (totalPages <= 1) return totalPages === 1 ? [1] : [];
+    if (totalPages <= 3) {
+        return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+    if (totalPages <= 7) {
+        return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    const pages = [1];
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+
+    if (start > 2) {
+        pages.push('ellipsis');
+    }
+
+    for (let page = start; page <= end; page += 1) {
+        pages.push(page);
+    }
+
+    if (end < totalPages - 1) {
+        pages.push('ellipsis');
+    }
+
+    pages.push(totalPages);
+    return pages;
+}
+
+function updateScenarioPageAfterLoad(totalCount = state.scenarios.length) {
+    if (!totalCount) {
+        state.scenarioPage = 1;
+        return;
+    }
+
+    const totalPages = Math.max(1, Math.ceil(totalCount / SCENARIO_PAGE_SIZE));
+    const safeCurrent = Math.min(Math.max(state.scenarioPage, 1), totalPages);
+    state.scenarioPage = safeCurrent;
+}
+
+function resetScenarioScroll() {
+    if (scenarioTableScroll) {
+        scenarioTableScroll.scrollTop = 0;
+    }
 }
 
 export function openScenarioModal(mode = 'add', scenario = null) {
@@ -436,7 +623,83 @@ export function wireScenarioEvents(onScenariosUpdated) {
         }
     });
 
+    scenarioSearchInput?.addEventListener('input', handleScenarioSearch);
+    scenarioPrevPageBtn?.addEventListener('click', () => {
+        if (state.scenarioPage <= 1) return;
+        state.scenarioPage -= 1;
+        renderScenarioTable();
+    });
+
+    scenarioNextPageBtn?.addEventListener('click', () => {
+        const totalPages = Math.max(1, Math.ceil(getFilteredScenarios().length / SCENARIO_PAGE_SIZE));
+        if (state.scenarioPage >= totalPages) return;
+        state.scenarioPage += 1;
+        renderScenarioTable();
+    });
+
+    setupScenarioSorting();
+
     updateMissionActionState();
     renderExpectedInputs();
     renderMissionList();
+}
+
+function handleScenarioSearch(event) {
+    state.scenarioSearchQuery = event.target.value || '';
+    state.scenarioPage = 1;
+    renderScenarioTable();
+}
+
+function setupScenarioSorting() {
+    if (!scenarioSortButtons?.length) return;
+
+    scenarioSortButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const sortKey = button.dataset.sortKey;
+            if (!sortKey) return;
+            handleScenarioSortChange(sortKey);
+        });
+    });
+
+    syncScenarioSortIndicators();
+}
+
+function handleScenarioSortChange(sortKey) {
+    const isSameKey = state.scenarioSortKey === sortKey;
+    const defaultDirection = DEFAULT_SCENARIO_SORT_DIRECTION[sortKey] || 'asc';
+    const nextDirection = isSameKey
+        ? state.scenarioSortDirection === 'asc'
+            ? 'desc'
+            : 'asc'
+        : defaultDirection;
+
+    state.scenarioSortKey = sortKey;
+    state.scenarioSortDirection = nextDirection;
+    state.scenarioPage = 1;
+    renderScenarioTable();
+}
+
+function syncScenarioSortIndicators() {
+    if (!scenarioSortButtons?.length) return;
+
+    scenarioSortButtons.forEach((button) => {
+        const sortKey = button.dataset.sortKey;
+        const icon = button.querySelector('.sort-icon');
+        const isActive = sortKey === state.scenarioSortKey;
+
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+
+        if (!icon) return;
+
+        if (!isActive) {
+            icon.textContent = '↕';
+            icon.setAttribute('aria-label', '정렬');
+            return;
+        }
+
+        const isAsc = state.scenarioSortDirection === 'asc';
+        icon.textContent = isAsc ? '▲' : '▼';
+        icon.setAttribute('aria-label', isAsc ? '오름차순' : '내림차순');
+    });
 }
