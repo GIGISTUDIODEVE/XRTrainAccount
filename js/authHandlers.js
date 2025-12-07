@@ -291,6 +291,8 @@ async function handleLogout() {
         state.contentSearchQuery = '';
         state.contentDateFrom = '';
         state.contentDateTo = '';
+        state.contentScenarioFilter = '';
+        state.contentDifficultyFilter = '';
         state.contentPage = 1;
         state.contentSortKey = 'participatedAt';
         state.contentSortDirection = 'desc';

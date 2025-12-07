@@ -13,6 +13,8 @@ export const state = {
     contentSearchQuery: '',
     contentDateFrom: '',
     contentDateTo: '',
+    contentScenarioFilter: '',
+    contentDifficultyFilter: '',
     participantSearchQuery: '',
     scenarios: [],
     scenarioPage: 1,

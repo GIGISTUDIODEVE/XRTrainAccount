@@ -469,6 +469,23 @@
                                     <p class="welcome-message">참가자별 시나리오 진행 내역과 소요 시간을 확인하세요.</p>
                                 </div>
                                 <div class="content-actions">
+                                    <div class="select-group" aria-label="콘텐츠 필터">
+                                        <div class="select-input">
+                                            <label for="contentScenarioFilter">시나리오</label>
+                                            <select id="contentScenarioFilter" aria-label="시나리오별 콘텐츠 기록 필터">
+                                                <option value="">전체 시나리오</option>
+                                            </select>
+                                        </div>
+                                        <div class="select-input">
+                                            <label for="contentDifficultyFilter">난이도</label>
+                                            <select id="contentDifficultyFilter" aria-label="난이도별 콘텐츠 기록 필터">
+                                                <option value="">전체 난이도</option>
+                                                <option value="easy">쉬움</option>
+                                                <option value="medium">보통</option>
+                                                <option value="hard">어려움</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                     <div class="date-filter" aria-label="기간 필터">
                                         <label for="contentDateFrom">시작일</label>
                                         <input type="date" id="contentDateFrom" aria-label="기록 시작일 선택">

@@ -7,6 +7,8 @@ import {
     contentDateFromInput,
     contentDateToInput,
     contentSearchInput,
+    contentScenarioFilterSelect,
+    contentDifficultyFilterSelect,
     contentSortButtons,
     contentTableBody,
     contentTableScroll,
@@ -52,6 +54,11 @@ function getScenarioMeta(scenarioUid) {
         title: scenario?.title || '알 수 없음',
         difficulty: formatDifficulty(scenario?.difficulty)
     };
+}
+
+function getScenarioDifficultyKey(scenarioUid) {
+    const scenario = state.scenarios.find((item) => item.id === scenarioUid || item.uid === scenarioUid);
+    return scenario?.difficulty || '';
 }
 
 export function normalizeContentRecord(data, id) {
@@ -145,12 +152,16 @@ function getFilteredContents() {
     const fromDate = parseDateStart(state.contentDateFrom);
     const toDate = parseDateEnd(state.contentDateTo);
     const query = (state.contentSearchQuery || '').trim().toLowerCase();
+    const scenarioFilter = state.contentScenarioFilter || '';
+    const difficultyFilter = state.contentDifficultyFilter || '';
     const baseRecords = state.contents.filter((record) => {
         const participatedAt = record.participatedAt ? new Date(record.participatedAt) : null;
         const participatedTime = participatedAt?.getTime();
 
         if (fromDate && (!participatedTime || participatedTime < fromDate.getTime())) return false;
         if (toDate && (!participatedTime || participatedTime > toDate.getTime())) return false;
+        if (scenarioFilter && record.scenarioUid !== scenarioFilter) return false;
+        if (difficultyFilter && getScenarioDifficultyKey(record.scenarioUid) !== difficultyFilter) return false;
         return true;
     });
 
@@ -180,6 +191,7 @@ export function renderContentTable() {
     if (!contentTableBody) return;
     initializeDefaultContentDateRange();
     syncContentDateInputs();
+    syncContentFilterInputs();
     if (contentSearchInput) {
         contentSearchInput.value = state.contentSearchQuery;
     }
@@ -347,6 +359,18 @@ export function wireContentEvents(onRefresh) {
         handleContentDateChange('to', event.target.value || '');
     });
 
+    contentScenarioFilterSelect?.addEventListener('change', (event) => {
+        state.contentScenarioFilter = event.target.value || '';
+        state.contentPage = 1;
+        renderContentTable();
+    });
+
+    contentDifficultyFilterSelect?.addEventListener('change', (event) => {
+        state.contentDifficultyFilter = event.target.value || '';
+        state.contentPage = 1;
+        renderContentTable();
+    });
+
     setupContentSorting();
     setupContentDetailModal();
 }
@@ -417,6 +441,54 @@ function syncContentDateInputs() {
     if (contentDateToInput) {
         contentDateToInput.value = state.contentDateTo || '';
     }
+}
+
+function syncContentFilterInputs() {
+    populateScenarioFilterOptions();
+
+    if (contentDifficultyFilterSelect) {
+        const allowed = ['', 'easy', 'medium', 'hard'];
+        if (!allowed.includes(state.contentDifficultyFilter)) {
+            state.contentDifficultyFilter = '';
+        }
+        contentDifficultyFilterSelect.value = state.contentDifficultyFilter;
+    }
+
+    if (contentScenarioFilterSelect) {
+        contentScenarioFilterSelect.value = state.contentScenarioFilter;
+    }
+}
+
+function populateScenarioFilterOptions() {
+    if (!contentScenarioFilterSelect) return;
+
+    const previousValue = state.contentScenarioFilter || '';
+    contentScenarioFilterSelect.innerHTML = '';
+
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = '전체 시나리오';
+    contentScenarioFilterSelect.appendChild(defaultOption);
+
+    const options = state.scenarios
+        .map((scenario) => ({
+            value: scenario.id || scenario.uid || '',
+            label: scenario.title || '제목 없음'
+        }))
+        .filter((item) => item.value)
+        .sort((a, b) => a.label.localeCompare(b.label, 'ko'));
+
+    options.forEach((option) => {
+        const optionEl = document.createElement('option');
+        optionEl.value = option.value;
+        optionEl.textContent = option.label;
+        contentScenarioFilterSelect.appendChild(optionEl);
+    });
+
+    const hasPrevious = options.some((option) => option.value === previousValue);
+    const nextValue = hasPrevious ? previousValue : '';
+    state.contentScenarioFilter = nextValue;
+    contentScenarioFilterSelect.value = nextValue;
 }
 
 function resetContentScroll() {
