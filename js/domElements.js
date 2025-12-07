@@ -119,6 +119,7 @@ export const contentStatsTotal = document.getElementById('contentStatsTotal');
 export const contentStatsSuccess = document.getElementById('contentStatsSuccess');
 export const contentStatsFailure = document.getElementById('contentStatsFailure');
 export const contentStatsRate = document.getElementById('contentStatsRate');
+export const contentStatsMissionAverage = document.getElementById('contentStatsMissionAverage');
 export const testParticipantSelect = document.getElementById('testParticipantSelect');
 export const testScenarioSelect = document.getElementById('testScenarioSelect');
 export const testParticipatedAtInput = document.getElementById('testParticipatedAt');

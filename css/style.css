@@ -900,6 +900,10 @@ body {
     color: #e86a6a;
 }
 
+.content-stats .stat-card.duration strong {
+    color: var(--text-primary);
+}
+
 .content-stats .stat-card.rate strong {
     color: var(--primary-color);
 }

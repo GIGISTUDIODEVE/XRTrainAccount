@@ -23,7 +23,8 @@ import {
     contentStatsTotal,
     contentStatsSuccess,
     contentStatsFailure,
-    contentStatsRate
+    contentStatsRate,
+    contentStatsMissionAverage
 } from './domElements.js';
 import { state } from './state.js';
 import {
@@ -515,7 +516,22 @@ function calculateContentStats(records) {
     const success = records.filter(isContentRecordSuccessful).length;
     const failure = Math.max(total - success, 0);
     const successRate = total ? Math.round((success / total) * 1000) / 10 : 0;
-    return { total, success, failure, successRate };
+
+    let missionDurationSum = 0;
+    let missionDurationCount = 0;
+
+    records.forEach((record) => {
+        const durations = Array.isArray(record.missionDurations) ? record.missionDurations : [];
+        durations.forEach((duration) => {
+            if (Number.isFinite(duration) && duration >= 0) {
+                missionDurationSum += duration;
+                missionDurationCount += 1;
+            }
+        });
+    });
+
+    const averageMissionSeconds = missionDurationCount ? missionDurationSum / missionDurationCount : 0;
+    return { total, success, failure, successRate, averageMissionSeconds, missionDurationCount };
 }
 
 function isContentRecordSuccessful(record) {
@@ -531,7 +547,8 @@ function renderContentStats(records, filtersActive) {
         !contentStatsTotal ||
         !contentStatsSuccess ||
         !contentStatsFailure ||
-        !contentStatsRate
+        !contentStatsRate ||
+        !contentStatsMissionAverage
     ) {
         return;
     }
@@ -543,10 +560,12 @@ function renderContentStats(records, filtersActive) {
         contentStatsSuccess.textContent = '0';
         contentStatsFailure.textContent = '0';
         contentStatsRate.textContent = '0%';
+        contentStatsMissionAverage.textContent = '-';
         return;
     }
 
-    const { total, success, failure, successRate } = calculateContentStats(records);
+    const { total, success, failure, successRate, averageMissionSeconds, missionDurationCount } =
+        calculateContentStats(records);
     const hasRecords = total > 0;
 
     contentStatsSection.classList.toggle('inactive', !hasRecords);
@@ -554,6 +573,9 @@ function renderContentStats(records, filtersActive) {
     contentStatsSuccess.textContent = success.toLocaleString('ko-KR');
     contentStatsFailure.textContent = failure.toLocaleString('ko-KR');
     contentStatsRate.textContent = `${successRate.toFixed(1)}%`;
+    contentStatsMissionAverage.textContent = missionDurationCount
+        ? formatDurationSeconds(averageMissionSeconds)
+        : '-';
     contentStatsMessage.textContent = hasRecords
         ? '현재 선택한 조건에 맞는 기록의 요약입니다.'
         : '조건에 맞는 기록이 없어 요약을 계산할 수 없습니다.';
