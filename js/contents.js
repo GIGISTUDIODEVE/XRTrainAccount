@@ -17,7 +17,13 @@ import {
     contentDetailModal,
     closeContentDetailModalBtn,
     dismissContentDetailBtn,
-    refreshContentsBtn
+    refreshContentsBtn,
+    contentStatsSection,
+    contentStatsMessage,
+    contentStatsTotal,
+    contentStatsSuccess,
+    contentStatsFailure,
+    contentStatsRate
 } from './domElements.js';
 import { state } from './state.js';
 import {
@@ -199,6 +205,7 @@ export function renderContentTable() {
     contentTableBody.innerHTML = '';
 
     const filteredRecords = getFilteredContents();
+    const areFiltersActive = areAllContentFiltersActive();
     updateContentPageAfterLoad(filteredRecords.length);
     const sortedRecords = getSortedContents(filteredRecords);
     const totalPages = Math.ceil(sortedRecords.length / CONTENT_PAGE_SIZE);
@@ -219,6 +226,7 @@ export function renderContentTable() {
         contentTableBody.appendChild(emptyRow);
         renderContentPagination(totalPages, hasContents);
         syncContentSortIndicators();
+        renderContentStats(filteredRecords, areFiltersActive);
         return;
     }
 
@@ -255,6 +263,7 @@ export function renderContentTable() {
 
     renderContentPagination(totalPages, hasContents);
     syncContentSortIndicators();
+    renderContentStats(filteredRecords, areFiltersActive);
     resetContentScroll();
 }
 
@@ -491,6 +500,63 @@ function populateScenarioFilterOptions() {
     const nextValue = hasPrevious ? previousValue : '';
     state.contentScenarioFilter = nextValue;
     contentScenarioFilterSelect.value = nextValue;
+}
+
+function areAllContentFiltersActive() {
+    const hasSearch = Boolean((state.contentSearchQuery || '').trim());
+    const hasScenario = Boolean(state.contentScenarioFilter);
+    const hasDifficulty = Boolean(state.contentDifficultyFilter);
+    const hasDateRange = Boolean(state.contentDateFrom) && Boolean(state.contentDateTo);
+    return hasSearch && hasScenario && hasDifficulty && hasDateRange;
+}
+
+function calculateContentStats(records) {
+    const total = records.length;
+    const success = records.filter(isContentRecordSuccessful).length;
+    const failure = Math.max(total - success, 0);
+    const successRate = total ? Math.round((success / total) * 1000) / 10 : 0;
+    return { total, success, failure, successRate };
+}
+
+function isContentRecordSuccessful(record) {
+    const missions = Array.isArray(record.missionStatuses) ? record.missionStatuses : [];
+    if (!missions.length) return false;
+    return missions.every((mission) => mission?.status === 'completed');
+}
+
+function renderContentStats(records, filtersActive) {
+    if (
+        !contentStatsSection ||
+        !contentStatsMessage ||
+        !contentStatsTotal ||
+        !contentStatsSuccess ||
+        !contentStatsFailure ||
+        !contentStatsRate
+    ) {
+        return;
+    }
+
+    if (!filtersActive) {
+        contentStatsSection.classList.add('inactive');
+        contentStatsMessage.textContent = '참가자 검색, 시나리오, 난이도, 기간을 모두 설정하면 요약을 확인할 수 있습니다.';
+        contentStatsTotal.textContent = '0';
+        contentStatsSuccess.textContent = '0';
+        contentStatsFailure.textContent = '0';
+        contentStatsRate.textContent = '0%';
+        return;
+    }
+
+    const { total, success, failure, successRate } = calculateContentStats(records);
+    const hasRecords = total > 0;
+
+    contentStatsSection.classList.toggle('inactive', !hasRecords);
+    contentStatsTotal.textContent = total.toLocaleString('ko-KR');
+    contentStatsSuccess.textContent = success.toLocaleString('ko-KR');
+    contentStatsFailure.textContent = failure.toLocaleString('ko-KR');
+    contentStatsRate.textContent = `${successRate.toFixed(1)}%`;
+    contentStatsMessage.textContent = hasRecords
+        ? '현재 선택한 조건에 맞는 기록의 요약입니다.'
+        : '조건에 맞는 기록이 없어 요약을 계산할 수 없습니다.';
 }
 
 function resetContentScroll() {
