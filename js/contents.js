@@ -10,6 +10,10 @@ import {
     contentSortButtons,
     contentTableBody,
     contentTableScroll,
+    contentDetailBody,
+    contentDetailModal,
+    closeContentDetailModalBtn,
+    dismissContentDetailBtn,
     refreshContentsBtn
 } from './domElements.js';
 import { state } from './state.js';
@@ -60,7 +64,8 @@ export function normalizeContentRecord(data, id) {
         missionStatuses: Array.isArray(data.missionStatuses) ? data.missionStatuses : [],
         retryCount: Number.isFinite(data.retryCount) ? data.retryCount : 0,
         missionDurations: Array.isArray(data.missionDurations) ? data.missionDurations : [],
-        totalPlayTime: Number.isFinite(data.totalPlayTime) ? data.totalPlayTime : 0
+        totalPlayTime: Number.isFinite(data.totalPlayTime) ? data.totalPlayTime : 0,
+        notes: typeof data.notes === 'string' ? data.notes : ''
     };
 }
 
@@ -190,7 +195,7 @@ export function renderContentTable() {
         const emptyRow = document.createElement('tr');
         emptyRow.className = 'empty-row';
         const td = document.createElement('td');
-        td.colSpan = 6;
+        td.colSpan = 7;
         const hasSearchQuery = Boolean((state.contentSearchQuery || '').trim());
         const hasDateFilter = Boolean(state.contentDateFrom || state.contentDateTo);
         const hasFilters = hasSearchQuery || hasDateFilter;
@@ -222,6 +227,15 @@ export function renderContentTable() {
             <td>${scenarioInfo.difficulty}</td>
             <td>${formatDurationSeconds(record.totalPlayTime)}</td>
         `;
+
+        const detailTd = document.createElement('td');
+        const detailButton = document.createElement('button');
+        detailButton.type = 'button';
+        detailButton.className = 'content-detail-button';
+        detailButton.textContent = '자세히';
+        detailButton.addEventListener('click', () => openContentDetailModal(record));
+        detailTd.appendChild(detailButton);
+        tr.appendChild(detailTd);
 
         contentTableBody.appendChild(tr);
     });
@@ -334,6 +348,7 @@ export function wireContentEvents(onRefresh) {
     });
 
     setupContentSorting();
+    setupContentDetailModal();
 }
 
 function handleContentDateChange(type, nextValue) {
@@ -462,4 +477,116 @@ function syncContentSortIndicators() {
         icon.textContent = isAsc ? '▲' : '▼';
         icon.setAttribute('aria-label', isAsc ? '오름차순' : '내림차순');
     });
+}
+
+function setupContentDetailModal() {
+    closeContentDetailModalBtn?.addEventListener('click', closeContentDetailModal);
+    dismissContentDetailBtn?.addEventListener('click', closeContentDetailModal);
+    contentDetailModal?.addEventListener('click', (event) => {
+        if (event.target === contentDetailModal) {
+            closeContentDetailModal();
+        }
+    });
+}
+
+function closeContentDetailModal() {
+    if (!contentDetailModal) return;
+    contentDetailModal.classList.add('hidden');
+    contentDetailModal.setAttribute('aria-hidden', 'true');
+}
+
+function openContentDetailModal(record) {
+    if (!contentDetailModal || !contentDetailBody) return;
+
+    const participantName = getParticipantName(record.participantUid);
+    const scenarioInfo = getScenarioMeta(record.scenarioUid);
+    const missionDetails = buildMissionDetailList(record);
+    const missionCount = Math.max(record.missionStatuses?.length || 0, record.missionDurations?.length || 0);
+    const retryCount = Number.isFinite(record.retryCount) ? record.retryCount : 0;
+    const totalPlayTime = Number.isFinite(record.totalPlayTime) ? record.totalPlayTime : 0;
+    const notes = record.notes?.trim() ? record.notes.trim() : '등록된 비고가 없습니다.';
+
+    contentDetailBody.innerHTML = `
+        <div class="content-detail-grid">
+            <div class="content-detail-field">
+                <div class="content-detail-label">참가자</div>
+                <div class="content-detail-value">${participantName}</div>
+            </div>
+            <div class="content-detail-field">
+                <div class="content-detail-label">시나리오</div>
+                <div class="content-detail-value">${scenarioInfo.title}</div>
+            </div>
+            <div class="content-detail-field">
+                <div class="content-detail-label">난이도</div>
+                <div class="content-detail-value">${scenarioInfo.difficulty}</div>
+            </div>
+            <div class="content-detail-field">
+                <div class="content-detail-label">참가 일시</div>
+                <div class="content-detail-value">${formatDateTime(record.participatedAt)}</div>
+            </div>
+            <div class="content-detail-field">
+                <div class="content-detail-label">총 플레이 시간</div>
+                <div class="content-detail-value">${formatDurationSeconds(totalPlayTime)}</div>
+            </div>
+            <div class="content-detail-field">
+                <div class="content-detail-label">재도전 횟수</div>
+                <div class="content-detail-value">${retryCount}</div>
+            </div>
+            <div class="content-detail-field">
+                <div class="content-detail-label">미션 개수</div>
+                <div class="content-detail-value">${missionCount || '미션 없음'}</div>
+            </div>
+        </div>
+
+        <div class="mission-detail-section">
+            <div class="mission-detail-header">
+                <h3>미션 상세</h3>
+                <span class="content-detail-value muted">${missionCount ? `${missionCount}개 미션` : '등록된 미션 없음'}</span>
+            </div>
+            <ul class="mission-detail-list">${missionDetails}</ul>
+            <div class="content-detail-note"><strong>비고</strong><br>${notes}</div>
+        </div>
+
+        <div class="content-detail-footer">
+            <span>기록 ID: ${record.id || '—'}</span>
+            <span>관리자: ${record.adminId || '—'}</span>
+        </div>
+    `;
+
+    contentDetailModal.classList.remove('hidden');
+    contentDetailModal.setAttribute('aria-hidden', 'false');
+}
+
+function buildMissionDetailList(record) {
+    const missionCount = Math.max(record.missionStatuses?.length || 0, record.missionDurations?.length || 0);
+
+    if (!missionCount) {
+        return '<li class="empty-helper">등록된 미션 정보가 없습니다.</li>';
+    }
+
+    const items = [];
+    for (let index = 0; index < missionCount; index += 1) {
+        const mission = record.missionStatuses?.[index] || {};
+        const missionName = mission?.name || `미션 ${index + 1}`;
+        const statusLabel = mission?.status || '상태 없음';
+        const durationText = getMissionDurationText(record, index);
+
+        items.push(`
+            <li class="mission-detail-item">
+                <div class="mission-name">${missionName}</div>
+                <div class="mission-meta">
+                    <span class="mission-status">${statusLabel}</span>
+                    <span>${durationText}</span>
+                </div>
+            </li>
+        `);
+    }
+
+    return items.join('');
+}
+
+function getMissionDurationText(record, index) {
+    const value = record.missionDurations?.[index];
+    if (!Number.isFinite(value)) return '소요 시간 정보 없음';
+    return `소요 시간 ${formatDurationSeconds(value)}`;
 }

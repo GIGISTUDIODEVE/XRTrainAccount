@@ -926,6 +926,21 @@ body {
     background: white;
 }
 
+.content-detail-button {
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--primary-color);
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.content-detail-button:hover {
+    box-shadow: var(--shadow-sm);
+}
+
 .empty-row td {
     text-align: center;
     color: var(--text-secondary);
@@ -1284,6 +1299,124 @@ body {
     justify-content: flex-end;
     gap: 10px;
     margin-top: 4px;
+}
+
+.content-detail-card {
+    width: min(840px, 100%);
+}
+
+.content-detail-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.content-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.content-detail-field {
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--bg-secondary);
+}
+
+.content-detail-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.content-detail-value {
+    font-weight: 700;
+    color: var(--text-primary);
+    word-break: break-word;
+}
+
+.content-detail-value.muted {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.mission-detail-section {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px;
+    background: var(--bg-secondary);
+}
+
+.mission-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.mission-detail-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.mission-detail-item {
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px dashed var(--border-color);
+    background: var(--bg-primary);
+}
+
+.mission-name {
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.mission-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.mission-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #4338ca;
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.content-detail-note {
+    margin-top: 6px;
+    padding: 10px;
+    border-radius: 10px;
+    background: var(--bg-primary);
+    border: 1px dashed var(--border-color);
+    color: var(--text-primary);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.content-detail-footer {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    color: var(--text-secondary);
+    font-size: 13px;
 }
 
 .test-card {
