@@ -40,6 +40,7 @@ function setupEventListeners() {
     wireScenarioEvents(async () => {
         await loadScenarios();
         renderScenarioTable();
+        renderContentTable();
         refreshTestPage();
     });
 

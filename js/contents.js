@@ -1,5 +1,6 @@
 import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 import { db } from './firebaseConfig.js';
+import { loadScenarios } from './scenarios.js';
 import {
     contentNextPageBtn,
     contentPageNumbers,
@@ -327,6 +328,7 @@ function buildPageList(totalPages, currentPage) {
 
 export function wireContentEvents(onRefresh) {
     refreshContentsBtn?.addEventListener('click', async () => {
+        await loadScenarios();
         await loadContents();
         renderContentTable();
         onRefresh?.();
