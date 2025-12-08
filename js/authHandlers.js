@@ -397,3 +397,13 @@ function removeCondition(index) {
     state.conditionList.splice(index, 1);
     renderConditionChips();
 }
+
+function getUnitySessionIdFromUrl() {
+    try {
+        const url = new URL(window.location.href);
+        return url.searchParams.get('unitySessionId');
+    } catch {
+        const match = window.location.href.match(/unitySessionId=([^&]+)/);
+        return match ? decodeURIComponent(match[1]) : null;
+    }
+}
