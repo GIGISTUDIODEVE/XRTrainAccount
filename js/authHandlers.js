@@ -15,7 +15,11 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 import { serverTimestamp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
-import { auth } from './firebaseConfig.js';
+import { httpsCallable } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-functions.js";
+import { doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+
+import { auth, db, functions } from './firebaseConfig.js';
+
 import {
     addConditionBtn,
     birthDateInput,
@@ -330,6 +334,7 @@ async function finalizeLoginFlow(user, message) {
     renderContentTable();
     showToast(message, 'success');
     showDashboard();
+    handleUnitySessionLogin(user);
 }
 
 function switchToSignup() {
@@ -391,4 +396,44 @@ function renderConditionChips() {
 function removeCondition(index) {
     state.conditionList.splice(index, 1);
     renderConditionChips();
+}
+
+function getUnitySessionIdFromUrl() {
+    try {
+        const url = new URL(window.location.href);
+        return url.searchParams.get('unitySessionId');
+    } catch {
+        const match = window.location.href.match(/unitySessionId=([^&]+)/);
+        return match ? decodeURIComponent(match[1]) : null;
+    }
+}
+
+async function handleUnitySessionLogin(user) {
+    const sessionId = getUnitySessionIdFromUrl();
+    if (!sessionId) return; // Unity에서 온 로그인 요청이 아닐 때는 아무것도 안 함
+
+    try {
+        const issueCustomToken = httpsCallable(functions, 'issueCustomToken');
+        const res = await issueCustomToken();
+        const customToken = res.data.customToken;
+
+        if (!customToken) {
+            console.error('[UnitySession] customToken 없음');
+            return;
+        }
+
+        const sessionRef = doc(db, 'unityLoginSessions', sessionId);
+        await updateDoc(sessionRef, {
+            status: 'ready',
+            token: customToken,
+            linkedUid: user.uid,
+            updatedAt: serverTimestamp()
+        });
+
+        // UX: “Unity와 연결되었습니다. 이 창은 닫으셔도 됩니다.”
+        showToast('Unity 클라이언트와 연동을 완료했습니다. 이 창은 닫으셔도 됩니다.', 'success');
+    } catch (error) {
+        console.error('[UnitySession] 처리 실패:', error);
+        showToast('Unity 연동 중 오류가 발생했습니다.', 'error');
+    }
 }
