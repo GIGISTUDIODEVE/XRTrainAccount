@@ -14,9 +14,8 @@ import {
     signOut
 } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 import { serverTimestamp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
-import { httpsCallable } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-functions.js";
 
-import { auth, functions } from './firebaseConfig.js';
+import { auth } from './firebaseConfig.js';
 import {
     addConditionBtn,
     birthDateInput,
@@ -332,7 +331,6 @@ async function finalizeLoginFlow(user, message) {
     renderContentTable();
     showToast(message, 'success');
     showDashboard();
-    trySendUnityLoginTokenToHost();
 }
 
 function switchToSignup() {
@@ -394,47 +392,4 @@ function renderConditionChips() {
 function removeCondition(index) {
     state.conditionList.splice(index, 1);
     renderConditionChips();
-}
-
-// Unity WebView 안에서 열렸는지 여부 판단 (URL에 ?unity=1 붙여서 접속한다고 가정)
-function isUnityWebViewEnvironment() {
-    try {
-        const url = new URL(window.location.href);
-        return url.searchParams.get('unity') === '1';
-    } catch (e) {
-        // 구형 브라우저 대비
-        return window.location.href.includes('unity=1');
-    }
-}
-
-let unityTokenAlreadySent = false;
-
-async function trySendUnityLoginTokenToHost() {
-    if (unityTokenAlreadySent) return;
-    if (!isUnityWebViewEnvironment()) return;
-    if (!auth.currentUser) return;
-
-    try {
-        // Cloud Functions에서 커스텀 토큰 발급
-        const issueCustomToken = httpsCallable(functions, "issueCustomToken");
-        const res = await issueCustomToken();
-        const customToken = res.data.customToken;
-
-        if (!customToken) {
-            console.error("Unity용 customToken이 응답에 없습니다.");
-            return;
-        }
-
-        const targetUrl = `unity-login://token?value=${encodeURIComponent(customToken)}`;
-
-        // Unity WebView 쪽에서 이 URL 스킴을 가로채서 토큰을 받도록 구현
-        window.location.href = targetUrl;
-
-        unityTokenAlreadySent = true;
-        console.log("[UnityLink] customToken을 Unity로 전송했습니다.");
-    } catch (error) {
-        console.error("[UnityLink] Unity용 customToken 발급/전송 실패:", error);
-        // 필요하다면 웹 UI에도 알려줄 수 있음
-        // showToast('Unity 연동 토큰 전송에 실패했습니다.', 'warning');
-    }
 }
