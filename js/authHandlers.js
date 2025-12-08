@@ -15,7 +15,11 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 import { serverTimestamp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
-import { auth } from './firebaseConfig.js';
+import { httpsCallable } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-functions.js";
+import { doc, updateDoc } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+
+import { auth, db, functions } from './firebaseConfig.js';
+
 import {
     addConditionBtn,
     birthDateInput,
