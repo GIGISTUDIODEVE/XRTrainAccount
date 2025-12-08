@@ -332,6 +332,7 @@ async function finalizeLoginFlow(user, message) {
     renderContentTable();
     showToast(message, 'success');
     showDashboard();
+    trySendUnityLoginTokenToHost();
 }
 
 function switchToSignup() {
