@@ -14,8 +14,9 @@ import {
     signOut
 } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
 import { serverTimestamp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+import { httpsCallable } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-functions.js";
 
-import { auth } from './firebaseConfig.js';
+import { auth, functions } from './firebaseConfig.js';
 import {
     addConditionBtn,
     birthDateInput,
