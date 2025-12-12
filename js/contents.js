@@ -71,7 +71,7 @@ function getParticipantName(participantUid) {
 function getScenarioMeta(scenarioUid) {
     const scenario = state.scenarios.find((item) => item.id === scenarioUid || item.uid === scenarioUid);
     return {
-        title: scenario?.title || '알 수 없음',
+        title: (scenario?.title || '알 수 없음').trim() || '알 수 없음',
         difficulty: formatDifficulty(scenario?.difficulty)
     };
 }
@@ -89,6 +89,7 @@ export function normalizeContentRecord(data, id) {
         scenarioUid: data.scenarioUid || '',
         participatedAt: data.participatedAt?.toDate ? data.participatedAt.toDate() : data.participatedAt,
         missionStatuses: Array.isArray(data.missionStatuses) ? data.missionStatuses : [],
+        missionAttemptCounts: Array.isArray(data.missionAttemptCounts) ? data.missionAttemptCounts : [],
         retryCount: Number.isFinite(data.retryCount) ? data.retryCount : 0,
         missionDurations: Array.isArray(data.missionDurations) ? data.missionDurations : [],
         totalPlayTime: Number.isFinite(data.totalPlayTime) ? data.totalPlayTime : 0,
@@ -180,7 +181,7 @@ function getFilteredContents() {
 
         if (fromDate && (!participatedTime || participatedTime < fromDate.getTime())) return false;
         if (toDate && (!participatedTime || participatedTime > toDate.getTime())) return false;
-        if (scenarioFilter && record.scenarioUid !== scenarioFilter) return false;
+        if (scenarioFilter && getScenarioMeta(record.scenarioUid).title !== scenarioFilter) return false;
         if (difficultyFilter && getScenarioDifficultyKey(record.scenarioUid) !== difficultyFilter) return false;
         return true;
     });
@@ -507,13 +508,15 @@ function populateScenarioFilterOptions() {
     defaultOption.textContent = '전체 시나리오';
     contentScenarioFilterSelect.appendChild(defaultOption);
 
-    const options = state.scenarios
-        .map((scenario) => ({
-            value: scenario.id || scenario.uid || '',
-            label: scenario.title || '제목 없음'
-        }))
-        .filter((item) => item.value)
-        .sort((a, b) => a.label.localeCompare(b.label, 'ko'));
+    const uniqueScenarioMap = new Map();
+    state.scenarios.forEach((scenario) => {
+        const title = (scenario.title || '제목 없음').trim() || '제목 없음';
+        if (title && !uniqueScenarioMap.has(title)) {
+            uniqueScenarioMap.set(title, { value: title, label: title });
+        }
+    });
+
+    const options = Array.from(uniqueScenarioMap.values()).sort((a, b) => a.label.localeCompare(b.label, 'ko'));
 
     options.forEach((option) => {
         const optionEl = document.createElement('option');
@@ -803,6 +806,8 @@ function buildMissionDetailList(record) {
         const missionName = mission?.name || `미션 ${index + 1}`;
         const statusLabel = mission?.status || '상태 없음';
         const durationText = getMissionDurationText(record, index);
+        const attemptText = getMissionAttemptText(record, index);
+        const averageText = getMissionAverageDurationText(record, index);
 
         items.push(`
             <li class="mission-detail-item">
@@ -810,6 +815,8 @@ function buildMissionDetailList(record) {
                 <div class="mission-meta">
                     <span class="mission-status">${statusLabel}</span>
                     <span>${durationText}</span>
+                    <span>${attemptText}</span>
+                    <span>${averageText}</span>
                 </div>
             </li>
         `);
@@ -822,6 +829,38 @@ function getMissionDurationText(record, index) {
     const value = record.missionDurations?.[index];
     if (!Number.isFinite(value)) return '소요 시간 정보 없음';
     return `소요 시간 ${formatDurationSeconds(value)}`;
+}
+
+function getMissionAttemptText(record, index) {
+    const attemptCount = getMissionAttemptCount(record, index);
+    if (!Number.isFinite(attemptCount)) return '도전 횟수 정보 없음';
+    return `도전 ${attemptCount}회`;
+}
+
+function getMissionAverageDurationText(record, index) {
+    const duration = record.missionDurations?.[index];
+    const attempts = getMissionAttemptCount(record, index);
+    if (!Number.isFinite(duration) || !Number.isFinite(attempts) || attempts <= 0) {
+        return '평균 시간 정보 없음';
+    }
+
+    const averageSeconds = duration / attempts;
+    return `평균 ${formatDurationSeconds(averageSeconds)}`;
+}
+
+function getMissionAttemptCount(record, index) {
+    const attemptsFromArray = record.missionAttemptCounts?.[index];
+    if (Number.isFinite(attemptsFromArray) && attemptsFromArray > 0) {
+        return attemptsFromArray;
+    }
+
+    const attemptsFromMission = record.missionStatuses?.[index]?.attemptCount;
+    if (Number.isFinite(attemptsFromMission) && attemptsFromMission > 0) {
+        return attemptsFromMission;
+    }
+
+    const retryFallback = Number.isFinite(record.retryCount) ? record.retryCount : 0;
+    return Math.max(1, retryFallback + 1);
 }
 
 function setupContentInsights() {
