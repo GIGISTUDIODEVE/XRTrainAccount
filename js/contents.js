@@ -71,7 +71,7 @@ function getParticipantName(participantUid) {
 function getScenarioMeta(scenarioUid) {
     const scenario = state.scenarios.find((item) => item.id === scenarioUid || item.uid === scenarioUid);
     return {
-        title: scenario?.title || '알 수 없음',
+        title: (scenario?.title || '알 수 없음').trim() || '알 수 없음',
         difficulty: formatDifficulty(scenario?.difficulty)
     };
 }
@@ -180,7 +180,7 @@ function getFilteredContents() {
 
         if (fromDate && (!participatedTime || participatedTime < fromDate.getTime())) return false;
         if (toDate && (!participatedTime || participatedTime > toDate.getTime())) return false;
-        if (scenarioFilter && record.scenarioUid !== scenarioFilter) return false;
+        if (scenarioFilter && getScenarioMeta(record.scenarioUid).title !== scenarioFilter) return false;
         if (difficultyFilter && getScenarioDifficultyKey(record.scenarioUid) !== difficultyFilter) return false;
         return true;
     });
@@ -507,13 +507,15 @@ function populateScenarioFilterOptions() {
     defaultOption.textContent = '전체 시나리오';
     contentScenarioFilterSelect.appendChild(defaultOption);
 
-    const options = state.scenarios
-        .map((scenario) => ({
-            value: scenario.id || scenario.uid || '',
-            label: scenario.title || '제목 없음'
-        }))
-        .filter((item) => item.value)
-        .sort((a, b) => a.label.localeCompare(b.label, 'ko'));
+    const uniqueScenarioMap = new Map();
+    state.scenarios.forEach((scenario) => {
+        const title = (scenario.title || '제목 없음').trim() || '제목 없음';
+        if (title && !uniqueScenarioMap.has(title)) {
+            uniqueScenarioMap.set(title, { value: title, label: title });
+        }
+    });
+
+    const options = Array.from(uniqueScenarioMap.values()).sort((a, b) => a.label.localeCompare(b.label, 'ko'));
 
     options.forEach((option) => {
         const optionEl = document.createElement('option');
