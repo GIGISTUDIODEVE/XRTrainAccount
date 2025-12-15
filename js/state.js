@@ -15,7 +15,6 @@ export const state = {
     contentDateTo: '',
     contentScenarioFilter: '',
     contentDifficultyFilter: '',
-    contentInsightInterval: 'month',
     participantSearchQuery: '',
     scenarios: [],
     scenarioPage: 1,
