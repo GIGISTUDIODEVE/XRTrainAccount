@@ -98,19 +98,29 @@ function renderMissionInputs(scenarioId) {
         durationInput.min = '0';
         durationInput.value = '60';
         durationInput.dataset.missionName = mission.name || `mission-${index + 1}`;
+        durationInput.dataset.missionField = 'duration';
         durationInput.placeholder = '소요 시간(초)';
 
-        controls.append(statusSelect, durationInput);
+        const attemptInput = document.createElement('input');
+        attemptInput.type = 'number';
+        attemptInput.min = '0';
+        attemptInput.value = '1';
+        attemptInput.dataset.missionName = mission.name || `mission-${index + 1}`;
+        attemptInput.dataset.missionField = 'attempts';
+        attemptInput.placeholder = '완료 횟수';
+
+        controls.append(statusSelect, durationInput, attemptInput);
         row.append(title, controls);
         testMissionList.appendChild(row);
     });
 }
 
 function readMissionStatuses() {
-    if (!testMissionList) return { statuses: [], durations: [] };
+    if (!testMissionList) return { statuses: [], missionDurations: [], missionAttemptCounts: [] };
 
-    const statusSelects = Array.from(testMissionList.querySelectorAll('select'));
-    const durationInputs = Array.from(testMissionList.querySelectorAll('input[type="number"]'));
+    const statusSelects = Array.from(testMissionList.querySelectorAll('select[data-mission-name]'));
+    const durationInputs = Array.from(testMissionList.querySelectorAll('input[data-mission-field="duration"]'));
+    const attemptInputs = Array.from(testMissionList.querySelectorAll('input[data-mission-field="attempts"]'));
 
     const statuses = statusSelects.map((select) => ({
         name: select.dataset.missionName || '',
@@ -118,8 +128,27 @@ function readMissionStatuses() {
     }));
 
     const missionDurations = durationInputs.map((input) => Number(input.value) || 0);
+    const missionAttemptCounts = attemptInputs.map((input) => {
+        const value = Number(input.value);
+        return Number.isFinite(value) && value >= 0 ? value : 0;
+    });
 
-    return { statuses, missionDurations };
+    return { statuses, missionDurations, missionAttemptCounts };
+}
+
+function getMissionAttemptCount(record, index) {
+    const attemptsFromArray = record.missionAttemptCounts?.[index];
+    if (Number.isFinite(attemptsFromArray) && attemptsFromArray > 0) {
+        return attemptsFromArray;
+    }
+
+    const attemptsFromMission = record.missionStatuses?.[index]?.attemptCount;
+    if (Number.isFinite(attemptsFromMission) && attemptsFromMission > 0) {
+        return attemptsFromMission;
+    }
+
+    const retryFallback = Number.isFinite(record.retryCount) ? record.retryCount : 0;
+    return Math.max(1, retryFallback + 1);
 }
 
 export function renderTestOptions() {
@@ -191,7 +220,13 @@ export function renderTestRecordTable() {
         const participant = getParticipantById(record.participantUid);
         const scenario = getScenarioById(record.scenarioUid);
         const missionSummary = record.missionStatuses.length
-            ? record.missionStatuses.map((item) => `${item.name}: ${item.status}`).join(', ')
+            ? record.missionStatuses
+                  .map((item, missionIndex) => {
+                      const attemptCount = getMissionAttemptCount(record, missionIndex);
+                      const attemptLabel = Number.isFinite(attemptCount) ? ` (${attemptCount}회)` : '';
+                      return `${item.name}: ${item.status}${attemptLabel}`;
+                  })
+                  .join(', ')
             : '미션 없음';
 
         const tr = document.createElement('tr');
@@ -290,7 +325,7 @@ export function wireTestPageEvents(onRecordAdded) {
         const result = validateTestForm();
         if (!result) return;
 
-        const { statuses, missionDurations } = readMissionStatuses();
+        const { statuses, missionDurations, missionAttemptCounts } = readMissionStatuses();
 
         const record = {
             participantUid: result.participantUid,
@@ -300,6 +335,7 @@ export function wireTestPageEvents(onRecordAdded) {
             retryCount: result.retryCount,
             missionStatuses: statuses,
             missionDurations,
+            missionAttemptCounts,
             notes: testNotesInput?.value?.trim() || ''
         };
 
