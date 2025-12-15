@@ -18,6 +18,7 @@ import {
     closeContentDetailModalBtn,
     dismissContentDetailBtn,
     refreshContentsBtn,
+    downloadContentCsvBtn,
     contentStatsSection,
     contentStatsMessage,
     contentStatsTotal,
@@ -214,6 +215,8 @@ export function renderContentTable() {
     const totalPages = Math.ceil(sortedRecords.length / CONTENT_PAGE_SIZE);
     const hasContents = Boolean(sortedRecords.length);
 
+    updateContentDownloadAvailability(filteredRecords, areFiltersActive);
+
     if (!hasContents) {
         const emptyRow = document.createElement('tr');
         emptyRow.className = 'empty-row';
@@ -387,6 +390,8 @@ export function wireContentEvents(onRefresh) {
 
     setupContentSorting();
     setupContentDetailModal();
+
+    downloadContentCsvBtn?.addEventListener('click', handleContentCsvDownload);
 }
 
 function handleContentDateChange(type, nextValue) {
@@ -613,6 +618,198 @@ function renderContentStats(records, filtersActive) {
     contentStatsMessage.textContent = hasRecords
         ? '현재 선택한 조건에 맞는 기록의 요약입니다.'
         : '조건에 맞는 기록이 없어 요약을 계산할 수 없습니다.';
+}
+
+function updateContentDownloadAvailability(records, filtersActive) {
+    if (!downloadContentCsvBtn) return;
+
+    const hasRecords = Array.isArray(records) && records.length > 0;
+    const isEnabled = Boolean(filtersActive && hasRecords);
+
+    downloadContentCsvBtn.disabled = !isEnabled;
+    downloadContentCsvBtn.title = isEnabled
+        ? '필터링된 기록을 CSV로 다운로드합니다.'
+        : '검색어, 시나리오, 난이도, 기간을 모두 설정하고 결과가 있을 때 다운로드할 수 있습니다.';
+}
+
+function handleContentCsvDownload() {
+    const filteredRecords = getFilteredContents();
+    const filtersActive = areAllContentFiltersActive();
+
+    if (!filtersActive) {
+        showToast('참가자 검색, 시나리오, 난이도, 기간을 모두 설정한 후 다운로드할 수 있습니다.', 'warning');
+        return;
+    }
+
+    if (!filteredRecords.length) {
+        showToast('다운로드할 기록이 없습니다. 조건을 조정해 주세요.', 'warning');
+        return;
+    }
+
+    const sortedRecords = getSortedContents(filteredRecords);
+    const csvContent = buildContentCsvReport(sortedRecords);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `content-report-${formatDateForFilename(new Date())}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast('필터링된 기록을 CSV로 내보냈습니다.', 'success');
+}
+
+function buildContentCsvReport(records) {
+    const lines = [];
+    lines.push('콘텐츠 기록 보고서');
+    lines.push(`생성 일시,${escapeCsvValue(formatDateTime(new Date()))}`);
+    lines.push(`필터 검색어,${escapeCsvValue(state.contentSearchQuery || '없음')}`);
+    lines.push(`필터 시나리오,${escapeCsvValue(state.contentScenarioFilter || '전체')}`);
+    lines.push(
+        `필터 난이도,${escapeCsvValue(
+            state.contentDifficultyFilter ? formatDifficulty(state.contentDifficultyFilter) : '전체'
+        )}`
+    );
+    lines.push(`필터 기간,${escapeCsvValue(`${state.contentDateFrom || '전체'} ~ ${state.contentDateTo || '전체'}`)}`);
+    lines.push('');
+
+    const {
+        total,
+        success,
+        failure,
+        successRate,
+        averageMissionSeconds,
+        missionDurationCount,
+        averageScenarioSeconds,
+        scenarioDurationCount
+    } = calculateContentStats(records);
+
+    lines.push('기록 요약');
+    lines.push('항목,값');
+    lines.push(`총 참여 횟수,${escapeCsvValue(total.toLocaleString('ko-KR'))}`);
+    lines.push(`총 성공,${escapeCsvValue(success.toLocaleString('ko-KR'))}`);
+    lines.push(`총 실패,${escapeCsvValue(failure.toLocaleString('ko-KR'))}`);
+    lines.push(`성공률,${escapeCsvValue(`${successRate.toFixed(1)}%`)}`);
+    lines.push(
+        `총 미션 평균 시간,${escapeCsvValue(
+            missionDurationCount ? formatDurationSeconds(averageMissionSeconds) : '-'
+        )}`
+    );
+    lines.push(
+        `평균 시나리오 플레이 시간,${escapeCsvValue(
+            scenarioDurationCount ? formatDurationSeconds(averageScenarioSeconds) : '-'
+        )}`
+    );
+    lines.push('');
+
+    lines.push('세부 기록');
+    lines.push(
+        [
+            '참가자 이름',
+            '참가 일시',
+            '시나리오',
+            '난이도',
+            '총 플레이 시간',
+            '재도전 횟수',
+            '미션 개수',
+            '미션 상태',
+            '미션 시간',
+            '미션 도전 횟수',
+            '비고'
+        ]
+            .map(escapeCsvValue)
+            .join(',')
+    );
+
+    records.forEach((record) => {
+        const participantName = getParticipantName(record.participantUid);
+        const scenarioMeta = getScenarioMeta(record.scenarioUid);
+        const missionCount = Math.max(record.missionStatuses?.length || 0, record.missionDurations?.length || 0);
+        const retryCount = Number.isFinite(record.retryCount) ? record.retryCount : 0;
+        const totalPlayTime = Number.isFinite(record.totalPlayTime) ? record.totalPlayTime : 0;
+
+        const row = [
+            participantName,
+            formatDateTime(record.participatedAt),
+            scenarioMeta.title,
+            scenarioMeta.difficulty,
+            formatDurationSeconds(totalPlayTime),
+            retryCount,
+            missionCount || '미션 없음',
+            buildMissionStatusSummary(record),
+            buildMissionDurationSummary(record),
+            buildMissionAttemptSummary(record),
+            record.notes?.trim() || ''
+        ].map(escapeCsvValue);
+
+        lines.push(row.join(','));
+    });
+
+    return `${lines.join('\n')}\n`;
+}
+
+function buildMissionStatusSummary(record) {
+    const missions = Array.isArray(record.missionStatuses) ? record.missionStatuses : [];
+    if (!missions.length) return '미션 정보 없음';
+
+    const summaries = missions.map((mission, index) => {
+        const name = mission?.name || `미션 ${index + 1}`;
+        const status = mission?.status || '상태 없음';
+        return `${name}:${status}`;
+    });
+
+    return summaries.join(' | ');
+}
+
+function buildMissionDurationSummary(record) {
+    const durations = Array.isArray(record.missionDurations) ? record.missionDurations : [];
+    if (!durations.length) return '—';
+
+    const parts = durations.map((duration, index) => {
+        if (!Number.isFinite(duration)) return `미션 ${index + 1}:정보 없음`;
+        return `${index + 1}번:${formatDurationSeconds(duration)}`;
+    });
+
+    return parts.join(' | ');
+}
+
+function buildMissionAttemptSummary(record) {
+    const missions = Array.isArray(record.missionStatuses) ? record.missionStatuses : [];
+    const attempts = Array.isArray(record.missionAttemptCounts) ? record.missionAttemptCounts : [];
+    const missionLength = Math.max(missions.length, attempts.length);
+
+    if (!missionLength) return '—';
+
+    const parts = [];
+    for (let index = 0; index < missionLength; index += 1) {
+        const attemptCount = getMissionAttemptCount(record, index);
+        if (!Number.isFinite(attemptCount)) {
+            parts.push(`미션 ${index + 1}:정보 없음`);
+            continue;
+        }
+        parts.push(`${index + 1}번:${attemptCount}회`);
+    }
+
+    return parts.join(' | ');
+}
+
+function escapeCsvValue(value) {
+    const stringValue = value === null || value === undefined ? '' : String(value).replace(/\r?\n|\r/g, ' ');
+    if (/[",]/.test(stringValue)) {
+        return `"${stringValue.replace(/"/g, '""')}"`;
+    }
+    return stringValue;
+}
+
+function formatDateForFilename(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    return `${year}${month}${day}-${hours}${minutes}${seconds}`;
 }
 
 function resetContentScroll() {

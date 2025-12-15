@@ -101,6 +101,7 @@ export const contentTableBody = document.getElementById('contentTableBody');
 export const contentTableScroll = document.getElementById('contentTableScroll');
 export const contentSortButtons = document.querySelectorAll('.content-sort-button');
 export const refreshContentsBtn = document.getElementById('refreshContentsBtn');
+export const downloadContentCsvBtn = document.getElementById('downloadContentCsvBtn');
 export const contentSearchInput = document.getElementById('contentSearchInput');
 export const contentDateFromInput = document.getElementById('contentDateFrom');
 export const contentDateToInput = document.getElementById('contentDateTo');
