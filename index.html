@@ -497,13 +497,17 @@
                                         <i class="fas fa-search" aria-hidden="true"></i>
                                         <input type="search" id="contentSearchInput" placeholder="참가자 이름 검색" aria-label="참가자 이름으로 콘텐츠 기록 검색">
                                     </div>
+                                    <button class="btn-primary" id="downloadContentCsvBtn" disabled>
+                                        <i class="fas fa-file-csv" aria-hidden="true"></i>
+                                        <span>CSV 다운로드</span>
+                                    </button>
+                                    <button class="btn-primary" id="downloadContentExcelBtn" disabled>
+                                        <i class="fas fa-file-excel" aria-hidden="true"></i>
+                                        <span>엑셀 다운로드</span>
+                                    </button>
                                     <button class="btn-secondary" id="refreshContentsBtn">
                                         <i class="fas fa-rotate"></i>
                                         <span>새로고침</span>
-                                    </button>
-                                    <button class="btn-primary" id="contentInsightsBtn" disabled>
-                                        <i class="fas fa-chart-line"></i>
-                                        <span>상세 통계</span>
                                     </button>
                                 </div>
                             </div>
@@ -850,59 +854,6 @@
 
             <div class="modal-actions">
                 <button type="button" class="btn-secondary" id="dismissContentDetail">닫기</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 콘텐츠 통계 모달 -->
-    <div class="modal-overlay hidden" id="contentInsightsModal" aria-hidden="true">
-        <div class="modal-card content-insights-card">
-            <div class="modal-header">
-                <div>
-                    <p class="eyebrow">상세 통계</p>
-                    <h2>콘텐츠 기록 인사이트</h2>
-                </div>
-                <button class="icon-button" id="closeContentInsightsModal" aria-label="닫기">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-
-            <div class="content-insights-body">
-                <div class="content-insights-header">
-                    <p class="stats-message" id="contentInsightsMessage">모든 필터를 설정하면 기간별 성과를 확인할 수 있습니다.</p>
-                    <div class="interval-toggle" role="group" aria-label="기간 단위 선택">
-                        <button type="button" class="toggle-button" data-interval="day">일</button>
-                        <button type="button" class="toggle-button" data-interval="week">주</button>
-                        <button type="button" class="toggle-button active" data-interval="month">월</button>
-                    </div>
-                </div>
-
-                <div class="content-insights-summary">
-                    <div class="stat-card">
-                        <p>총 참여</p>
-                        <strong id="contentInsightsTotal">0</strong>
-                    </div>
-                    <div class="stat-card success">
-                        <p>성공</p>
-                        <strong id="contentInsightsSuccess">0</strong>
-                    </div>
-                    <div class="stat-card failure">
-                        <p>실패</p>
-                        <strong id="contentInsightsFailure">0</strong>
-                    </div>
-                    <div class="stat-card rate">
-                        <p>성공률</p>
-                        <strong id="contentInsightsRate">0%</strong>
-                    </div>
-                </div>
-
-                <div class="content-insights-chart" id="contentInsightsChart">
-                    <div class="empty-helper">조건에 맞는 기록이 있을 때 기간별 시나리오 및 미션 성공률을 보여줍니다.</div>
-                </div>
-            </div>
-
-            <div class="modal-actions">
-                <button type="button" class="btn-secondary" id="dismissContentInsights">닫기</button>
             </div>
         </div>
     </div>

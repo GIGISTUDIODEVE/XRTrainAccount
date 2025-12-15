@@ -10,8 +10,6 @@ import {
     contentSearchInput,
     contentScenarioFilterSelect,
     contentDifficultyFilterSelect,
-    contentInsightsBtn,
-    contentInsightsModal,
     contentSortButtons,
     contentTableBody,
     contentTableScroll,
@@ -20,6 +18,8 @@ import {
     closeContentDetailModalBtn,
     dismissContentDetailBtn,
     refreshContentsBtn,
+    downloadContentCsvBtn,
+    downloadContentExcelBtn,
     contentStatsSection,
     contentStatsMessage,
     contentStatsTotal,
@@ -27,16 +27,7 @@ import {
     contentStatsFailure,
     contentStatsRate,
     contentStatsMissionAverage,
-    contentStatsScenarioAverage,
-    closeContentInsightsModalBtn,
-    dismissContentInsightsBtn,
-    contentInsightsChart,
-    contentInsightsMessage,
-    contentInsightsIntervalButtons,
-    contentInsightsTotal,
-    contentInsightsSuccess,
-    contentInsightsFailure,
-    contentInsightsRate
+    contentStatsScenarioAverage
 } from './domElements.js';
 import { state } from './state.js';
 import {
@@ -221,7 +212,6 @@ export function renderContentTable() {
     const filteredRecords = getFilteredContents();
     const areFiltersActive = areAllContentFiltersActive();
     updateContentPageAfterLoad(filteredRecords.length);
-    updateContentInsightsButtonState(areFiltersActive, filteredRecords.length);
     const sortedRecords = getSortedContents(filteredRecords);
     const totalPages = Math.ceil(sortedRecords.length / CONTENT_PAGE_SIZE);
     const hasContents = Boolean(sortedRecords.length);
@@ -242,7 +232,6 @@ export function renderContentTable() {
         renderContentPagination(totalPages, hasContents);
         syncContentSortIndicators();
         renderContentStats(filteredRecords, areFiltersActive);
-        renderContentInsightsIfOpen(filteredRecords, areFiltersActive);
         return;
     }
 
@@ -280,7 +269,6 @@ export function renderContentTable() {
     renderContentPagination(totalPages, hasContents);
     syncContentSortIndicators();
     renderContentStats(filteredRecords, areFiltersActive);
-    renderContentInsightsIfOpen(filteredRecords, areFiltersActive);
     resetContentScroll();
 }
 
@@ -321,15 +309,6 @@ function renderContentPagination(totalPages, hasContents) {
 
     contentPrevPageBtn.disabled = !hasContents || state.contentPage <= 1;
     contentNextPageBtn.disabled = !hasContents || state.contentPage >= safeTotalPages;
-}
-
-function updateContentInsightsButtonState(filtersActive, recordCount) {
-    if (!contentInsightsBtn) return;
-    const enabled = filtersActive && recordCount > 0;
-    contentInsightsBtn.disabled = !enabled;
-    contentInsightsBtn.title = enabled
-        ? '필터 조건에 맞는 상세 통계를 확인합니다.'
-        : '참가자 검색, 시나리오, 난이도, 기간을 모두 설정하면 활성화됩니다.';
 }
 
 function buildPageList(totalPages, currentPage) {
@@ -410,7 +389,9 @@ export function wireContentEvents(onRefresh) {
 
     setupContentSorting();
     setupContentDetailModal();
-    setupContentInsights();
+
+    downloadContentCsvBtn?.addEventListener('click', handleContentCsvDownload);
+    downloadContentExcelBtn?.addEventListener('click', handleContentExcelDownload);
 }
 
 function handleContentDateChange(type, nextValue) {
@@ -608,6 +589,7 @@ function renderContentStats(records, filtersActive) {
         contentStatsRate.textContent = '0%';
         contentStatsMissionAverage.textContent = '-';
         contentStatsScenarioAverage.textContent = '-';
+        updateContentDownloadAvailability([], false);
         return;
     }
 
@@ -637,11 +619,310 @@ function renderContentStats(records, filtersActive) {
     contentStatsMessage.textContent = hasRecords
         ? '현재 선택한 조건에 맞는 기록의 요약입니다.'
         : '조건에 맞는 기록이 없어 요약을 계산할 수 없습니다.';
+
+    updateContentDownloadAvailability(records, filtersActive && hasRecords);
 }
 
-function renderContentInsightsIfOpen(records, filtersActive) {
-    if (!contentInsightsModal || contentInsightsModal.classList.contains('hidden')) return;
-    renderContentInsights(records, filtersActive);
+function updateContentDownloadAvailability(records, filtersActive) {
+    if (!downloadContentCsvBtn && !downloadContentExcelBtn) return;
+
+    const hasRecords = Array.isArray(records) && records.length > 0;
+    const isEnabled = Boolean(filtersActive && hasRecords);
+    const disabledTitle = '검색어, 시나리오, 난이도, 기간을 모두 설정하고 결과가 있을 때 다운로드할 수 있습니다.';
+
+    if (downloadContentCsvBtn) {
+        downloadContentCsvBtn.disabled = !isEnabled;
+        downloadContentCsvBtn.title = isEnabled
+            ? '필터링된 기록을 CSV로 다운로드합니다.'
+            : disabledTitle;
+    }
+
+    if (downloadContentExcelBtn) {
+        downloadContentExcelBtn.disabled = !isEnabled;
+        downloadContentExcelBtn.title = isEnabled
+            ? '필터링된 기록을 엑셀 파일로 다운로드합니다.'
+            : disabledTitle;
+    }
+}
+
+function handleContentCsvDownload() {
+    const filteredRecords = getFilteredContents();
+    const filtersActive = areAllContentFiltersActive();
+
+    if (!filtersActive) {
+        showToast('참가자 검색, 시나리오, 난이도, 기간을 모두 설정한 후 다운로드할 수 있습니다.', 'warning');
+        return;
+    }
+
+    if (!filteredRecords.length) {
+        showToast('다운로드할 기록이 없습니다. 조건을 조정해 주세요.', 'warning');
+        return;
+    }
+
+    const sortedRecords = getSortedContents(filteredRecords);
+    const csvContent = buildContentCsvReport(sortedRecords);
+    const utf8Bom = '\ufeff';
+    const blob = new Blob([utf8Bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `content-report-${formatDateForFilename(new Date())}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast('필터링된 기록을 CSV로 내보냈습니다.', 'success');
+}
+
+function handleContentExcelDownload() {
+    const filteredRecords = getFilteredContents();
+    const filtersActive = areAllContentFiltersActive();
+
+    if (!filtersActive) {
+        showToast('참가자 검색, 시나리오, 난이도, 기간을 모두 설정한 후 다운로드할 수 있습니다.', 'warning');
+        return;
+    }
+
+    if (!filteredRecords.length) {
+        showToast('다운로드할 기록이 없습니다. 조건을 조정해 주세요.', 'warning');
+        return;
+    }
+
+    const sortedRecords = getSortedContents(filteredRecords);
+    const excelContent = buildContentExcelReport(sortedRecords);
+    const blob = new Blob([excelContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `content-report-${formatDateForFilename(new Date())}.xls`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast('필터링된 기록을 엑셀 파일로 내보냈습니다.', 'success');
+}
+
+function buildContentCsvReport(records) {
+    const { metaRows, summaryRows, detailHeader, detailRows } = buildContentReportData(records);
+    const lines = [];
+
+    lines.push('콘텐츠 기록 보고서');
+    metaRows.forEach(([label, value]) => {
+        lines.push(`${label},${escapeCsvValue(value)}`);
+    });
+    lines.push('');
+
+    lines.push('기록 요약');
+    lines.push('항목,값');
+    summaryRows.forEach(([label, value]) => {
+        lines.push(`${escapeCsvValue(label)},${escapeCsvValue(value)}`);
+    });
+    lines.push('');
+
+    lines.push('세부 기록');
+    lines.push(detailHeader.map(escapeCsvValue).join(','));
+    detailRows.forEach((row) => {
+        lines.push(row.map(escapeCsvValue).join(','));
+    });
+
+    return `${lines.join('\n')}\n`;
+}
+
+function buildContentExcelReport(records) {
+    const { metaRows, summaryRows, detailHeader, detailRows } = buildContentReportData(records);
+    const borderStyle = 'border:1px solid #c8c8c8;padding:4px;text-align:left;';
+    const headerStyle = `${borderStyle}background:#f2f4f7;font-weight:bold;`;
+    const sectionTitleStyle = 'font-size:14px;font-weight:bold;margin:12px 0 6px;';
+
+    const metaRowsHtml = metaRows
+        .map(([label, value]) =>
+            `<tr><th style="${headerStyle}">${escapeHtml(label)}</th><td style="${borderStyle}">${escapeHtml(value)}</td></tr>`
+        )
+        .join('');
+
+    const summaryRowsHtml = summaryRows
+        .map(
+            ([label, value]) =>
+                `<tr><th style="${headerStyle}">${escapeHtml(label)}</th><td style="${borderStyle}">${escapeHtml(value)}</td></tr>`
+        )
+        .join('');
+
+    const detailHeaderHtml = detailHeader
+        .map((cell) => `<th style="${headerStyle}">${escapeHtml(cell)}</th>`)
+        .join('');
+
+    const detailRowsHtml = detailRows
+        .map(
+            (row) =>
+                `<tr>${row
+                    .map((cell) => `<td style="${borderStyle}">${escapeHtml(cell)}</td>`)
+                    .join('')}</tr>`
+        )
+        .join('');
+
+    const html = `\ufeff<html xmlns:x="urn:schemas-microsoft-com:office:excel">
+        <head>
+            <meta charset="UTF-8" />
+        </head>
+        <body>
+            <div style="${sectionTitleStyle}">콘텐츠 기록 보고서</div>
+            <table style="border-collapse:collapse;font-size:12px;margin-bottom:12px;">
+                ${metaRowsHtml}
+            </table>
+            <div style="${sectionTitleStyle}">기록 요약</div>
+            <table style="border-collapse:collapse;font-size:12px;margin-bottom:12px;">
+                ${summaryRowsHtml}
+            </table>
+            <div style="${sectionTitleStyle}">세부 기록</div>
+            <table style="border-collapse:collapse;font-size:12px;">
+                <thead><tr>${detailHeaderHtml}</tr></thead>
+                <tbody>${detailRowsHtml}</tbody>
+            </table>
+        </body>
+    </html>`;
+
+    return html;
+}
+
+function buildContentReportData(records) {
+    const metaRows = [
+        ['생성 일시', formatDateTime(new Date())],
+        ['필터 검색어', state.contentSearchQuery || '없음'],
+        ['필터 시나리오', state.contentScenarioFilter || '전체'],
+        [
+            '필터 난이도',
+            state.contentDifficultyFilter ? formatDifficulty(state.contentDifficultyFilter) : '전체'
+        ],
+        ['필터 기간', `${state.contentDateFrom || '전체'} ~ ${state.contentDateTo || '전체'}`]
+    ];
+
+    const stats = calculateContentStats(records);
+    const summaryRows = [
+        ['총 참여 횟수', stats.total.toLocaleString('ko-KR')],
+        ['총 성공', stats.success.toLocaleString('ko-KR')],
+        ['총 실패', stats.failure.toLocaleString('ko-KR')],
+        ['성공률', `${stats.successRate.toFixed(1)}%`],
+        [
+            '총 미션 평균 시간',
+            stats.missionDurationCount ? formatDurationSeconds(stats.averageMissionSeconds) : '-'
+        ],
+        [
+            '평균 시나리오 플레이 시간',
+            stats.scenarioDurationCount ? formatDurationSeconds(stats.averageScenarioSeconds) : '-'
+        ]
+    ];
+
+    const detailHeader = [
+        '참가자 이름',
+        '참가 일시',
+        '시나리오',
+        '난이도',
+        '총 플레이 시간',
+        '재도전 횟수',
+        '미션 개수',
+        '미션 상태',
+        '미션 시간',
+        '미션 도전 횟수',
+        '비고'
+    ];
+
+    const detailRows = records.map((record) => {
+        const participantName = getParticipantName(record.participantUid);
+        const scenarioMeta = getScenarioMeta(record.scenarioUid);
+        const missionCount = Math.max(record.missionStatuses?.length || 0, record.missionDurations?.length || 0);
+        const retryCount = Number.isFinite(record.retryCount) ? record.retryCount : 0;
+        const totalPlayTime = Number.isFinite(record.totalPlayTime) ? record.totalPlayTime : 0;
+
+        return [
+            participantName,
+            formatDateTime(record.participatedAt),
+            scenarioMeta.title,
+            scenarioMeta.difficulty,
+            formatDurationSeconds(totalPlayTime),
+            retryCount,
+            missionCount || '미션 없음',
+            buildMissionStatusSummary(record),
+            buildMissionDurationSummary(record),
+            buildMissionAttemptSummary(record),
+            record.notes?.trim() || ''
+        ];
+    });
+
+    return { metaRows, summaryRows, detailHeader, detailRows };
+}
+
+function buildMissionStatusSummary(record) {
+    const missions = Array.isArray(record.missionStatuses) ? record.missionStatuses : [];
+    if (!missions.length) return '미션 정보 없음';
+
+    const summaries = missions.map((mission, index) => {
+        const name = mission?.name || `미션 ${index + 1}`;
+        const status = mission?.status || '상태 없음';
+        return `${name}:${status}`;
+    });
+
+    return summaries.join(' | ');
+}
+
+function buildMissionDurationSummary(record) {
+    const durations = Array.isArray(record.missionDurations) ? record.missionDurations : [];
+    if (!durations.length) return '—';
+
+    const parts = durations.map((duration, index) => {
+        if (!Number.isFinite(duration)) return `미션 ${index + 1}:정보 없음`;
+        return `${index + 1}번:${formatDurationSeconds(duration)}`;
+    });
+
+    return parts.join(' | ');
+}
+
+function buildMissionAttemptSummary(record) {
+    const missions = Array.isArray(record.missionStatuses) ? record.missionStatuses : [];
+    const attempts = Array.isArray(record.missionAttemptCounts) ? record.missionAttemptCounts : [];
+    const missionLength = Math.max(missions.length, attempts.length);
+
+    if (!missionLength) return '—';
+
+    const parts = [];
+    for (let index = 0; index < missionLength; index += 1) {
+        const attemptCount = getMissionAttemptCount(record, index);
+        if (!Number.isFinite(attemptCount)) {
+            parts.push(`미션 ${index + 1}:정보 없음`);
+            continue;
+        }
+        parts.push(`${index + 1}번:${attemptCount}회`);
+    }
+
+    return parts.join(' | ');
+}
+
+function escapeCsvValue(value) {
+    const stringValue = value === null || value === undefined ? '' : String(value).replace(/\r?\n|\r/g, ' ');
+    if (/[",]/.test(stringValue)) {
+        return `"${stringValue.replace(/"/g, '""')}"`;
+    }
+    return stringValue;
+}
+
+function escapeHtml(value) {
+    const stringValue = value === null || value === undefined ? '' : String(value);
+    return stringValue
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/\r?\n|\r/g, '<br>');
+}
+
+function formatDateForFilename(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    return `${year}${month}${day}-${hours}${minutes}${seconds}`;
 }
 
 function resetContentScroll() {
@@ -701,17 +982,6 @@ function syncContentSortIndicators() {
         const isAsc = state.contentSortDirection === 'asc';
         icon.textContent = isAsc ? '▲' : '▼';
         icon.setAttribute('aria-label', isAsc ? '오름차순' : '내림차순');
-    });
-}
-
-function syncContentInsightsIntervalButtons() {
-    if (!contentInsightsIntervalButtons?.length) return;
-    const current = state.contentInsightInterval || 'month';
-
-    contentInsightsIntervalButtons.forEach((button) => {
-        const isActive = button.dataset.interval === current;
-        button.classList.toggle('active', isActive);
-        button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
     });
 }
 
@@ -863,287 +1133,3 @@ function getMissionAttemptCount(record, index) {
     return Math.max(1, retryFallback + 1);
 }
 
-function setupContentInsights() {
-    contentInsightsBtn?.addEventListener('click', () => {
-        const records = getFilteredContents();
-        const filtersActive = areAllContentFiltersActive();
-        if (!filtersActive) {
-            showToast('참가자 검색, 시나리오, 난이도, 기간을 모두 설정해야 합니다.', 'warning');
-            return;
-        }
-
-        if (!records.length) {
-            showToast('조건에 맞는 콘텐츠 기록이 없습니다.', 'info');
-            return;
-        }
-
-        openContentInsightsModal(records, filtersActive);
-    });
-
-    contentInsightsIntervalButtons?.forEach((button) => {
-        button.addEventListener('click', () => {
-            const interval = button.dataset.interval;
-            if (!interval || state.contentInsightInterval === interval) return;
-
-            state.contentInsightInterval = interval;
-            syncContentInsightsIntervalButtons();
-
-            if (!contentInsightsModal || contentInsightsModal.classList.contains('hidden')) return;
-            const records = getFilteredContents();
-            const filtersActive = areAllContentFiltersActive();
-            if (!filtersActive || !records.length) return;
-            renderContentInsights(records, filtersActive);
-        });
-    });
-
-    closeContentInsightsModalBtn?.addEventListener('click', closeContentInsightsModal);
-    dismissContentInsightsBtn?.addEventListener('click', closeContentInsightsModal);
-    contentInsightsModal?.addEventListener('click', (event) => {
-        if (event.target === contentInsightsModal) {
-            closeContentInsightsModal();
-        }
-    });
-
-    syncContentInsightsIntervalButtons();
-}
-
-function openContentInsightsModal(records, filtersActive) {
-    if (!contentInsightsModal) return;
-    renderContentInsights(records, filtersActive);
-    contentInsightsModal.classList.remove('hidden');
-    contentInsightsModal.setAttribute('aria-hidden', 'false');
-}
-
-function closeContentInsightsModal() {
-    if (!contentInsightsModal) return;
-    contentInsightsModal.classList.add('hidden');
-    contentInsightsModal.setAttribute('aria-hidden', 'true');
-}
-
-function renderContentInsights(records, filtersActive) {
-    renderContentInsightsSummary(records, filtersActive);
-    renderContentInsightsChart(records, filtersActive);
-}
-
-function renderContentInsightsSummary(records, filtersActive) {
-    if (!contentInsightsMessage || !contentInsightsTotal || !contentInsightsSuccess || !contentInsightsFailure || !contentInsightsRate) {
-        return;
-    }
-
-    if (!filtersActive) {
-        contentInsightsMessage.textContent = '모든 필터를 설정하면 기간별 성과를 확인할 수 있습니다.';
-        contentInsightsTotal.textContent = '0';
-        contentInsightsSuccess.textContent = '0';
-        contentInsightsFailure.textContent = '0';
-        contentInsightsRate.textContent = '0%';
-        return;
-    }
-
-    const { total, success, failure, successRate } = calculateContentStats(records);
-    const hasRecords = total > 0;
-    contentInsightsMessage.textContent = hasRecords
-        ? '필터 조건에 맞는 기간별 성과입니다.'
-        : '조건에 맞는 기록이 없어 요약을 계산할 수 없습니다.';
-    contentInsightsTotal.textContent = total.toLocaleString('ko-KR');
-    contentInsightsSuccess.textContent = success.toLocaleString('ko-KR');
-    contentInsightsFailure.textContent = failure.toLocaleString('ko-KR');
-    contentInsightsRate.textContent = `${successRate.toFixed(1)}%`;
-}
-
-function renderContentInsightsChart(records, filtersActive) {
-    if (!contentInsightsChart) return;
-
-    if (!filtersActive) {
-        contentInsightsChart.innerHTML = '<div class="empty-helper">필터를 모두 설정하면 기간별 차트가 표시됩니다.</div>';
-        return;
-    }
-
-    if (!records.length) {
-        contentInsightsChart.innerHTML = '<div class="empty-helper">조건에 맞는 기록이 없어 그래프를 생성할 수 없습니다.</div>';
-        return;
-    }
-
-    const interval = state.contentInsightInterval || 'month';
-    const { series, missionNames } = buildInsightSeries(records, interval);
-    const hasSeries = series.length > 0;
-
-    if (!hasSeries) {
-        contentInsightsChart.innerHTML = '<div class="empty-helper">기간 정보를 계산할 수 없습니다.</div>';
-        return;
-    }
-
-    const hasMissionData = missionNames.length > 0 && series.some((item) => item.missionRates.some((mission) => mission.hasData));
-    contentInsightsChart.innerHTML = '';
-
-    series.forEach((period) => {
-        const periodBlock = document.createElement('div');
-        periodBlock.className = 'insight-period';
-
-        const header = document.createElement('div');
-        header.className = 'insight-period-header';
-        const periodLabel = document.createElement('div');
-        periodLabel.className = 'period-label';
-        periodLabel.textContent = period.label;
-        const periodMeta = document.createElement('div');
-        periodMeta.className = 'period-meta';
-        periodMeta.textContent = period.hasScenarioData ? `시나리오 성공률 ${period.scenarioRate.toFixed(1)}%` : '시나리오 데이터 없음';
-        header.appendChild(periodLabel);
-        header.appendChild(periodMeta);
-        periodBlock.appendChild(header);
-
-        const scenarioBar = createInsightBar('시나리오 성공률', period.scenarioRate, 'scenario', period.hasScenarioData);
-        periodBlock.appendChild(scenarioBar);
-
-        if (hasMissionData) {
-            const missionContainer = document.createElement('div');
-            missionContainer.className = 'mission-bars';
-            missionNames.forEach((name) => {
-                const missionRate = period.missionRates.find((mission) => mission.name === name) || {
-                    rate: 0,
-                    hasData: false
-                };
-                missionContainer.appendChild(createInsightBar(name, missionRate.rate, 'mission', missionRate.hasData));
-            });
-            periodBlock.appendChild(missionContainer);
-        } else {
-            const empty = document.createElement('div');
-            empty.className = 'insight-empty';
-            empty.textContent = '미션 성공률을 계산할 데이터가 없습니다.';
-            periodBlock.appendChild(empty);
-        }
-
-        contentInsightsChart.appendChild(periodBlock);
-    });
-}
-
-function createInsightBar(label, rate, type, hasData) {
-    const clampedRate = clampRate(rate);
-    const wrapper = document.createElement('div');
-    wrapper.className = `insight-bar ${type}${hasData ? '' : ' muted'}`;
-
-    const barLabel = document.createElement('span');
-    barLabel.className = 'insight-bar-label';
-    barLabel.textContent = label;
-
-    const barTrack = document.createElement('div');
-    barTrack.className = 'insight-bar-track';
-    const barFill = document.createElement('div');
-    barFill.className = 'insight-bar-fill';
-    barFill.style.width = `${clampedRate}%`;
-    barFill.setAttribute('aria-valuemin', '0');
-    barFill.setAttribute('aria-valuemax', '100');
-    barFill.setAttribute('aria-valuenow', clampedRate.toFixed(1));
-    barTrack.appendChild(barFill);
-
-    const value = document.createElement('span');
-    value.className = 'insight-bar-value';
-    value.textContent = hasData ? `${clampedRate.toFixed(1)}%` : '데이터 없음';
-
-    wrapper.appendChild(barLabel);
-    wrapper.appendChild(barTrack);
-    wrapper.appendChild(value);
-    return wrapper;
-}
-
-function buildInsightSeries(records, interval) {
-    const groups = new Map();
-    const missionNameSet = new Set();
-
-    records.forEach((record) => {
-        const participatedAt = record.participatedAt ? new Date(record.participatedAt) : null;
-        if (!participatedAt || Number.isNaN(participatedAt.getTime())) return;
-
-        const { key, label, order } = getIntervalKey(participatedAt, interval);
-        if (!groups.has(key)) {
-            groups.set(key, {
-                label,
-                order,
-                scenarioTotal: 0,
-                scenarioSuccess: 0,
-                missions: new Map()
-            });
-        }
-
-        const group = groups.get(key);
-        group.scenarioTotal += 1;
-        if (isContentRecordSuccessful(record)) {
-            group.scenarioSuccess += 1;
-        }
-
-        const missions = Array.isArray(record.missionStatuses) ? record.missionStatuses : [];
-        missions.forEach((mission, index) => {
-            const name = mission?.name?.trim() || `미션 ${index + 1}`;
-            missionNameSet.add(name);
-            const status = mission?.status;
-            const current = group.missions.get(name) || { success: 0, total: 0 };
-            current.total += 1;
-            if (status === 'completed') {
-                current.success += 1;
-            }
-            group.missions.set(name, current);
-        });
-    });
-
-    const sortedMissionNames = Array.from(missionNameSet).sort((a, b) => a.localeCompare(b, 'ko'));
-    const series = Array.from(groups.values())
-        .sort((a, b) => a.order - b.order)
-        .map((group) => {
-            const missionRates = sortedMissionNames.map((name) => {
-                const mission = group.missions.get(name) || { success: 0, total: 0 };
-                const rate = mission.total ? Math.round((mission.success / mission.total) * 1000) / 10 : 0;
-                return { name, rate, hasData: mission.total > 0 };
-            });
-
-            const scenarioRate = group.scenarioTotal
-                ? Math.round((group.scenarioSuccess / group.scenarioTotal) * 1000) / 10
-                : 0;
-
-            return {
-                label: group.label,
-                order: group.order,
-                scenarioRate,
-                hasScenarioData: group.scenarioTotal > 0,
-                missionRates
-            };
-        });
-
-    return { series, missionNames: sortedMissionNames };
-}
-
-function getIntervalKey(date, interval) {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const day = date.getDate();
-
-    if (interval === 'day') {
-        const label = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const order = new Date(year, month, day).getTime();
-        return { key: label, label, order };
-    }
-
-    if (interval === 'week') {
-        const { year: weekYear, week, startDate } = getWeekMeta(date);
-        const label = `${weekYear}년 ${String(week).padStart(2, '0')}주`;
-        return { key: `${weekYear}-W${week}`, label, order: startDate.getTime() };
-    }
-
-    const label = `${year}-${String(month + 1).padStart(2, '0')}월`;
-    const order = new Date(year, month, 1).getTime();
-    return { key: `${year}-${month + 1}`, label, order };
-}
-
-function getWeekMeta(date) {
-    const temp = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    const dayNum = temp.getUTCDay() || 7;
-    temp.setUTCDate(temp.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(temp.getUTCFullYear(), 0, 1));
-    const week = Math.ceil(((temp - yearStart) / 86400000 + 1) / 7);
-    const startDate = new Date(temp);
-    startDate.setUTCDate(temp.getUTCDate() - (temp.getUTCDay() || 7) + 1);
-    return { year: temp.getUTCFullYear(), week, startDate };
-}
-
-function clampRate(value) {
-    if (!Number.isFinite(value)) return 0;
-    return Math.min(Math.max(value, 0), 100);
-}
