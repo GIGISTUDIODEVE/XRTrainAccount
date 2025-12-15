@@ -267,7 +267,6 @@ export function renderContentTable() {
     renderContentPagination(totalPages, hasContents);
     syncContentSortIndicators();
     renderContentStats(filteredRecords, areFiltersActive);
-    renderContentInsightsIfOpen(filteredRecords, areFiltersActive);
     resetContentScroll();
 }
 
