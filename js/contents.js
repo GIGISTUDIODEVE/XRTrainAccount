@@ -589,6 +589,7 @@ function renderContentStats(records, filtersActive) {
         contentStatsRate.textContent = '0%';
         contentStatsMissionAverage.textContent = '-';
         contentStatsScenarioAverage.textContent = '-';
+        updateContentDownloadAvailability([], false);
         return;
     }
 
@@ -618,6 +619,8 @@ function renderContentStats(records, filtersActive) {
     contentStatsMessage.textContent = hasRecords
         ? '현재 선택한 조건에 맞는 기록의 요약입니다.'
         : '조건에 맞는 기록이 없어 요약을 계산할 수 없습니다.';
+
+    updateContentDownloadAvailability(records, filtersActive && hasRecords);
 }
 
 function updateContentDownloadAvailability(records, filtersActive) {
