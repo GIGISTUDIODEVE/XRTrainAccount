@@ -55,6 +55,11 @@ body {
     display: none;
 }
 
+/* "상세 통계" 버튼 제거 */
+#contentInsightsBtn {
+    display: none !important;
+}
+
 /* Auth Layout */
 .auth-shell {
     width: 100%;
