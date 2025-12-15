@@ -215,6 +215,8 @@ export function renderContentTable() {
     const totalPages = Math.ceil(sortedRecords.length / CONTENT_PAGE_SIZE);
     const hasContents = Boolean(sortedRecords.length);
 
+    updateContentDownloadAvailability(filteredRecords, areFiltersActive);
+
     if (!hasContents) {
         const emptyRow = document.createElement('tr');
         emptyRow.className = 'empty-row';
