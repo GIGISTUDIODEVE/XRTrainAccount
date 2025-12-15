@@ -19,6 +19,7 @@ import {
     dismissContentDetailBtn,
     refreshContentsBtn,
     downloadContentCsvBtn,
+    downloadContentExcelBtn,
     contentStatsSection,
     contentStatsMessage,
     contentStatsTotal,
@@ -392,6 +393,7 @@ export function wireContentEvents(onRefresh) {
     setupContentDetailModal();
 
     downloadContentCsvBtn?.addEventListener('click', handleContentCsvDownload);
+    downloadContentExcelBtn?.addEventListener('click', handleContentExcelDownload);
 }
 
 function handleContentDateChange(type, nextValue) {
@@ -624,15 +626,25 @@ function renderContentStats(records, filtersActive) {
 }
 
 function updateContentDownloadAvailability(records, filtersActive) {
-    if (!downloadContentCsvBtn) return;
+    if (!downloadContentCsvBtn && !downloadContentExcelBtn) return;
 
     const hasRecords = Array.isArray(records) && records.length > 0;
     const isEnabled = Boolean(filtersActive && hasRecords);
+    const disabledTitle = '검색어, 시나리오, 난이도, 기간을 모두 설정하고 결과가 있을 때 다운로드할 수 있습니다.';
 
-    downloadContentCsvBtn.disabled = !isEnabled;
-    downloadContentCsvBtn.title = isEnabled
-        ? '필터링된 기록을 CSV로 다운로드합니다.'
-        : '검색어, 시나리오, 난이도, 기간을 모두 설정하고 결과가 있을 때 다운로드할 수 있습니다.';
+    if (downloadContentCsvBtn) {
+        downloadContentCsvBtn.disabled = !isEnabled;
+        downloadContentCsvBtn.title = isEnabled
+            ? '필터링된 기록을 CSV로 다운로드합니다.'
+            : disabledTitle;
+    }
+
+    if (downloadContentExcelBtn) {
+        downloadContentExcelBtn.disabled = !isEnabled;
+        downloadContentExcelBtn.title = isEnabled
+            ? '필터링된 기록을 엑셀 파일로 다운로드합니다.'
+            : disabledTitle;
+    }
 }
 
 function handleContentCsvDownload() {
@@ -664,76 +676,166 @@ function handleContentCsvDownload() {
     showToast('필터링된 기록을 CSV로 내보냈습니다.', 'success');
 }
 
-function buildContentCsvReport(records) {
-    const lines = [];
-    lines.push('콘텐츠 기록 보고서');
-    lines.push(`생성 일시,${escapeCsvValue(formatDateTime(new Date()))}`);
-    lines.push(`필터 검색어,${escapeCsvValue(state.contentSearchQuery || '없음')}`);
-    lines.push(`필터 시나리오,${escapeCsvValue(state.contentScenarioFilter || '전체')}`);
-    lines.push(
-        `필터 난이도,${escapeCsvValue(
-            state.contentDifficultyFilter ? formatDifficulty(state.contentDifficultyFilter) : '전체'
-        )}`
-    );
-    lines.push(`필터 기간,${escapeCsvValue(`${state.contentDateFrom || '전체'} ~ ${state.contentDateTo || '전체'}`)}`);
-    lines.push('');
+function handleContentExcelDownload() {
+    const filteredRecords = getFilteredContents();
+    const filtersActive = areAllContentFiltersActive();
 
-    const {
-        total,
-        success,
-        failure,
-        successRate,
-        averageMissionSeconds,
-        missionDurationCount,
-        averageScenarioSeconds,
-        scenarioDurationCount
-    } = calculateContentStats(records);
+    if (!filtersActive) {
+        showToast('참가자 검색, 시나리오, 난이도, 기간을 모두 설정한 후 다운로드할 수 있습니다.', 'warning');
+        return;
+    }
+
+    if (!filteredRecords.length) {
+        showToast('다운로드할 기록이 없습니다. 조건을 조정해 주세요.', 'warning');
+        return;
+    }
+
+    const sortedRecords = getSortedContents(filteredRecords);
+    const excelContent = buildContentExcelReport(sortedRecords);
+    const blob = new Blob([excelContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `content-report-${formatDateForFilename(new Date())}.xls`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast('필터링된 기록을 엑셀 파일로 내보냈습니다.', 'success');
+}
+
+function buildContentCsvReport(records) {
+    const { metaRows, summaryRows, detailHeader, detailRows } = buildContentReportData(records);
+    const lines = [];
+
+    lines.push('콘텐츠 기록 보고서');
+    metaRows.forEach(([label, value]) => {
+        lines.push(`${label},${escapeCsvValue(value)}`);
+    });
+    lines.push('');
 
     lines.push('기록 요약');
     lines.push('항목,값');
-    lines.push(`총 참여 횟수,${escapeCsvValue(total.toLocaleString('ko-KR'))}`);
-    lines.push(`총 성공,${escapeCsvValue(success.toLocaleString('ko-KR'))}`);
-    lines.push(`총 실패,${escapeCsvValue(failure.toLocaleString('ko-KR'))}`);
-    lines.push(`성공률,${escapeCsvValue(`${successRate.toFixed(1)}%`)}`);
-    lines.push(
-        `총 미션 평균 시간,${escapeCsvValue(
-            missionDurationCount ? formatDurationSeconds(averageMissionSeconds) : '-'
-        )}`
-    );
-    lines.push(
-        `평균 시나리오 플레이 시간,${escapeCsvValue(
-            scenarioDurationCount ? formatDurationSeconds(averageScenarioSeconds) : '-'
-        )}`
-    );
+    summaryRows.forEach(([label, value]) => {
+        lines.push(`${escapeCsvValue(label)},${escapeCsvValue(value)}`);
+    });
     lines.push('');
 
     lines.push('세부 기록');
-    lines.push(
-        [
-            '참가자 이름',
-            '참가 일시',
-            '시나리오',
-            '난이도',
-            '총 플레이 시간',
-            '재도전 횟수',
-            '미션 개수',
-            '미션 상태',
-            '미션 시간',
-            '미션 도전 횟수',
-            '비고'
-        ]
-            .map(escapeCsvValue)
-            .join(',')
-    );
+    lines.push(detailHeader.map(escapeCsvValue).join(','));
+    detailRows.forEach((row) => {
+        lines.push(row.map(escapeCsvValue).join(','));
+    });
 
-    records.forEach((record) => {
+    return `${lines.join('\n')}\n`;
+}
+
+function buildContentExcelReport(records) {
+    const { metaRows, summaryRows, detailHeader, detailRows } = buildContentReportData(records);
+    const borderStyle = 'border:1px solid #c8c8c8;padding:4px;text-align:left;';
+    const headerStyle = `${borderStyle}background:#f2f4f7;font-weight:bold;`;
+    const sectionTitleStyle = 'font-size:14px;font-weight:bold;margin:12px 0 6px;';
+
+    const metaRowsHtml = metaRows
+        .map(([label, value]) =>
+            `<tr><th style="${headerStyle}">${escapeHtml(label)}</th><td style="${borderStyle}">${escapeHtml(value)}</td></tr>`
+        )
+        .join('');
+
+    const summaryRowsHtml = summaryRows
+        .map(
+            ([label, value]) =>
+                `<tr><th style="${headerStyle}">${escapeHtml(label)}</th><td style="${borderStyle}">${escapeHtml(value)}</td></tr>`
+        )
+        .join('');
+
+    const detailHeaderHtml = detailHeader
+        .map((cell) => `<th style="${headerStyle}">${escapeHtml(cell)}</th>`)
+        .join('');
+
+    const detailRowsHtml = detailRows
+        .map(
+            (row) =>
+                `<tr>${row
+                    .map((cell) => `<td style="${borderStyle}">${escapeHtml(cell)}</td>`)
+                    .join('')}</tr>`
+        )
+        .join('');
+
+    const html = `\ufeff<html xmlns:x="urn:schemas-microsoft-com:office:excel">
+        <head>
+            <meta charset="UTF-8" />
+        </head>
+        <body>
+            <div style="${sectionTitleStyle}">콘텐츠 기록 보고서</div>
+            <table style="border-collapse:collapse;font-size:12px;margin-bottom:12px;">
+                ${metaRowsHtml}
+            </table>
+            <div style="${sectionTitleStyle}">기록 요약</div>
+            <table style="border-collapse:collapse;font-size:12px;margin-bottom:12px;">
+                ${summaryRowsHtml}
+            </table>
+            <div style="${sectionTitleStyle}">세부 기록</div>
+            <table style="border-collapse:collapse;font-size:12px;">
+                <thead><tr>${detailHeaderHtml}</tr></thead>
+                <tbody>${detailRowsHtml}</tbody>
+            </table>
+        </body>
+    </html>`;
+
+    return html;
+}
+
+function buildContentReportData(records) {
+    const metaRows = [
+        ['생성 일시', formatDateTime(new Date())],
+        ['필터 검색어', state.contentSearchQuery || '없음'],
+        ['필터 시나리오', state.contentScenarioFilter || '전체'],
+        [
+            '필터 난이도',
+            state.contentDifficultyFilter ? formatDifficulty(state.contentDifficultyFilter) : '전체'
+        ],
+        ['필터 기간', `${state.contentDateFrom || '전체'} ~ ${state.contentDateTo || '전체'}`]
+    ];
+
+    const stats = calculateContentStats(records);
+    const summaryRows = [
+        ['총 참여 횟수', stats.total.toLocaleString('ko-KR')],
+        ['총 성공', stats.success.toLocaleString('ko-KR')],
+        ['총 실패', stats.failure.toLocaleString('ko-KR')],
+        ['성공률', `${stats.successRate.toFixed(1)}%`],
+        [
+            '총 미션 평균 시간',
+            stats.missionDurationCount ? formatDurationSeconds(stats.averageMissionSeconds) : '-'
+        ],
+        [
+            '평균 시나리오 플레이 시간',
+            stats.scenarioDurationCount ? formatDurationSeconds(stats.averageScenarioSeconds) : '-'
+        ]
+    ];
+
+    const detailHeader = [
+        '참가자 이름',
+        '참가 일시',
+        '시나리오',
+        '난이도',
+        '총 플레이 시간',
+        '재도전 횟수',
+        '미션 개수',
+        '미션 상태',
+        '미션 시간',
+        '미션 도전 횟수',
+        '비고'
+    ];
+
+    const detailRows = records.map((record) => {
         const participantName = getParticipantName(record.participantUid);
         const scenarioMeta = getScenarioMeta(record.scenarioUid);
         const missionCount = Math.max(record.missionStatuses?.length || 0, record.missionDurations?.length || 0);
         const retryCount = Number.isFinite(record.retryCount) ? record.retryCount : 0;
         const totalPlayTime = Number.isFinite(record.totalPlayTime) ? record.totalPlayTime : 0;
 
-        const row = [
+        return [
             participantName,
             formatDateTime(record.participatedAt),
             scenarioMeta.title,
@@ -745,12 +847,10 @@ function buildContentCsvReport(records) {
             buildMissionDurationSummary(record),
             buildMissionAttemptSummary(record),
             record.notes?.trim() || ''
-        ].map(escapeCsvValue);
-
-        lines.push(row.join(','));
+        ];
     });
 
-    return `${lines.join('\n')}\n`;
+    return { metaRows, summaryRows, detailHeader, detailRows };
 }
 
 function buildMissionStatusSummary(record) {
@@ -804,6 +904,17 @@ function escapeCsvValue(value) {
         return `"${stringValue.replace(/"/g, '""')}"`;
     }
     return stringValue;
+}
+
+function escapeHtml(value) {
+    const stringValue = value === null || value === undefined ? '' : String(value);
+    return stringValue
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/\r?\n|\r/g, '<br>');
 }
 
 function formatDateForFilename(date) {
