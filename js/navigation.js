@@ -31,13 +31,21 @@ export function setActivePage(pageKey) {
 }
 
 export function setDashboardTab(tabKey) {
+    const isTestTabDisabled = !tabTest || tabTest.classList.contains('hidden');
+    if (tabKey === 'test' && isTestTabDisabled) {
+        tabKey = 'admin';
+    }
+
     const tabMap = {
         admin: { tab: tabAdmin, view: adminView },
         participants: { tab: tabParticipants, view: participantView },
         scenarios: { tab: tabScenarios, view: scenarioView },
-        contents: { tab: tabContents, view: contentView },
-        test: { tab: tabTest, view: testView }
+        contents: { tab: tabContents, view: contentView }
     };
+
+    if (!isTestTabDisabled) {
+        tabMap.test = { tab: tabTest, view: testView };
+    }
 
     Object.entries(tabMap).forEach(([key, { tab, view }]) => {
         const isActive = key === tabKey;

@@ -55,5 +55,9 @@ function setupEventListeners() {
     document.getElementById('tabParticipants')?.addEventListener('click', () => setDashboardTab('participants'));
     document.getElementById('tabScenarios')?.addEventListener('click', () => setDashboardTab('scenarios'));
     document.getElementById('tabContents')?.addEventListener('click', () => setDashboardTab('contents'));
-    document.getElementById('tabTest')?.addEventListener('click', () => setDashboardTab('test'));
+
+    const testTab = document.getElementById('tabTest');
+    if (testTab && !testTab.classList.contains('hidden')) {
+        testTab.addEventListener('click', () => setDashboardTab('test'));
+    }
 }
